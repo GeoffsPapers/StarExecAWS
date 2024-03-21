@@ -1,0 +1,86 @@
+\documentclass{easychair}
+
+% \usepackage{doc}
+\usepackage{setspace}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage[straightquotes]{newtxtt}
+
+%----Suppress extra space in texttt mode
+\AddToHook{cmd/ttfamily/after}{\frenchspacing}
+
+%----Making things more compact
+\newcommand{\smalltt}[1]{\small \texttt{#1}}
+\newenvironment{packed_itemize}{
+\vspace*{-0.3em}
+\begin{itemize}
+\setlength{\partopsep}{0pt}
+\setlength{\itemsep}{1pt}
+\setlength{\parskip}{0pt}
+\setlength{\parsep}{0pt}
+}{\end{itemize}}
+\newenvironment{packed_enumerate}{
+\vspace*{-0.3em}
+\begin{enumerate}
+\setlength{\partopsep}{0pt}
+\setlength{\itemsep}{1pt}
+\setlength{\parskip}{0pt}
+\setlength{\parsep}{0pt}
+}{\end{enumerate}}
+% \renewcommand{\textfraction}{0.07}
+% \renewcommand{\topfraction}{0.9}
+% \renewcommand{\bottomfraction}{0.9}
+% \renewcommand{\floatpagefraction}{0.66}
+% \setlength{\floatsep}{2.0pt plus 2.0pt minus 2.0pt}
+% \setlength{\textfloatsep}{5.0pt plus 2.0pt minus 0.0pt}
+
+\newcommand{\alex}[1]{{\color{red}{{#1}}}}
+
+\title{Towards StarExec on the AWS Cloud}
+
+\author{
+  David Fuenmayor\inst{1}
+\and
+  Jack McKeown\inst{2}
+\and
+  Geoff Sutcliffe\inst{2}
+}
+
+\institute{
+  University of Bamberg,
+  Bamberg, Germany\\
+  \email{david.fuenmayor@uni-bamberg.de}
+\and
+  University of Miami,
+  Miami, USA\\
+  \email{jam771@miami.edu,geoff@cs.miami.edu}
+}
+
+\authorrunning{Fuenmayor, McKeown, Sutcliffe}
+\titlerunning{Stars in the Clouds}
+
+\begin{document}
+\maketitle
+
+%--------------------------------------------------------------------------------------------------
+\begin{abstract}
+\end{abstract}
+%--------------------------------------------------------------------------------------------------
+\section{Introduction}
+\label{Introduction}
+
+\paragraph{This paper is organized as follows:}
+
+%--------------------------------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------------------------------
+\section{Conclusion}
+\label{Conclusion}
+
+This paper 
+%--------------------------------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{Bibliography.bib}
+%--------------------------------------------------------------------------------------------------
+\end{document}
+%--------------------------------------------------------------------------------------------------
