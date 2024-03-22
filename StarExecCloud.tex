@@ -159,17 +159,220 @@ One possibility is to host StarExec-Kubernetes in AWS.
 
 Containerization
 
+Docker and Podman
+
 Kubernetes
 
 %--------------------------------------------------------------------------------------------------
 % Jack and Geoff and David
-\section{Containerizing ATP Systems}
-\label{ATPSystems}
+\section{Containerizing StarExec and ATP Systems}
+\label{Containerizing}
+
+Base build is Ubuntu.
+The {\tt artifacts} directory, where all relevant executables are copied when an ATP system
+is executed, is created as part of this container.
+
+{\tt dockerhub} for storing containers.
+{\tt tptpstarexec} repository.
+One directory for StarExec, one directory for each ATP system.
 
 %--------------------------------------------------------------------------------------------------
-% Geoff and Divid
-\section{Into the AWS Cloud}
-\label{AWSCloud}
+% David
+\subsection{StarExec}
+\label{StarExec}
+
+%--------------------------------------------------------------------------------------------------
+% Geoff and Jack
+\subsection{ATP Systems}
+\label{ATPSystems}
+
+The {\tt tptp-world-build} container provides utilities from the TPTP World \cite{Sut24} that 
+are used by ATP systems, e.g., {\tt SPCForProblem} detects the Specialist Problem Class (SPC) 
+\cite{SS01} of a problem that is used by some ATP systems to decide on what search parameters 
+to use.
+Additionally, the {\tt runsolver} utility \cite{Rou11} for limiting and reporting the resources
+used by an ATP system is part of this container.
+To support these utilities some libraries that are not part of the {\tt ubuntu-build} have
+to be added before downloading and building the 
+The {\tt /benchmark} directory, where the TPTP problem for the ATP system to solve is placed, is
+created as part of this container.
+
+A runnable ATP system container is built in two phases.
+The ATP system executables are first put into an {\em ATP-system-name}{\tt-build} container,
+which is subsequently put into a {\tt -runsolver} container that adds the {\tt runsolver} utility 
+so that the resource usage of the ATP system can be limited and reported.
+
+The {\em ATP-system-name}{\tt-build} container with the ATP system's executables is based on the
+{\tt ubuntu-build} container.
+The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
+to build the executables are run.
+The executables are copied into the {\tt /artifacts} directory.
+The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile},
+e.g., in Figure~\ref{E---build} {\tt E 3.0.03} is chosen.
+This localization is necessary because the incantations for selecting an ATP system version vary 
+from system to system.
+By convention the container is named {\em ATP-system-name}{\tt -build}, and by default has
+the {\tt :latest} tag,
+Figure~\ref{E---build} shows the {\tt Dockerfile} for building E's {\tt -build} container, using 
+the command {\tt podman build -t eprover-build .}.
+
+\begin{figure}[htb]
+{\small
+\begin{verbatim}
+#------------------------------------------------------------
+FROM ubuntu-build
+
+# Clones repository
+ARG E_VERSION=E-3.0.03
+RUN git clone --depth 1 --branch $E_VERSION https://github.com/eprover/eprover.git
+
+# Set working directory to cloned sources directory
+WORKDIR /eprover
+
+# Builds first-order executable
+RUN ./configure --bindir=/artifacts && \
+    make && \
+    make install
+# RUN cp PROVER/eprover /artifacts/eprover
+
+# Builds higher-order executable
+RUN ./configure --enable-ho && \
+    make rebuild
+RUN cp PROVER/eprover-ho /artifacts/eprover-ho
+#------------------------------------------------------------
+\end{verbatim}
+}
+\caption{The {\tt Dockerfile} for E's {\tt -build} container}
+\label{E---build}
+\end{figure}
+
+The ATP system's {\tt -runsolver} container adds {\tt runsolver} control to the 
+{\em ATP-system-name}{\tt-build} container, so that when executed the resource usage of the
+ATP system can be limited and reported.
+The container is based on the {\em ATP-system-name}{\tt-build} and {\tt tptp-world-build}
+containers.
+Note how the container is built with the default {\tt :latest} tagged 
+{\em ATP-system-name}{\tt-build}. 
+The executables from the {\tt -runsolver} container are copied from its {\tt /artifacts}
+directory into this container's {\tt /artifacts} directory.
+Additionally, the {\tt run\_container} script, described in Section~\ref{Running}, is copied into
+{\tt /artifacts}.
+By convention this container is named
+{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver}, i.e., including the version
+number so that users know what version of the ATP system has been containerized.
+Figure~\ref{E---runsolver} shows the {\tt Dockerfile} for building E's {\tt -runsolver}
+container, using the command {\tt podman build -t eprover:3.0.03-runsolver .}, i.e., it contains
+E version {\tt 3.0.03}.
+
+\begin{figure}[htb]
+{\small
+\begin{verbatim}
+#------------------------------------------------------------
+FROM eprover-build AS builder
+FROM tptp-world-build
+
+ENV PATH=".:${PATH}"
+WORKDIR /artifacts
+
+# E-specific stuff from ostensibly external image
+COPY --from=builder /artifacts/eprover /artifacts/
+COPY --from=builder /artifacts/eprover-ho /artifacts/
+
+# run_container script 
+ADD run_container /artifacts/
+
+# run_E script 
+ADD run_E /artifacts/
+
+ENTRYPOINT ["runsolver"]
+#------------------------------------------------------------
+\end{verbatim}
+}
+\caption{The {\tt Dockerfile} for E's {\tt -runsolver} container}
+\label{E---runsolver}
+\end{figure}
+
+Each {\tt -runsolver} container is pushed to dockerhub in it's repository directory, tagged
+as {\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver-}{\em architecture},
+where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
+
+%--------------------------------------------------------------------------------------------------
+% Geoff 
+\subsection{Running ATP System Containers}
+\label{Running}
+
+\begin{figure}[htb]
+{\footnotesize
+\begin{verbatim}
+#------------------------------------------------------------
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import os, sys
+import shutil
+
+
+def getRunsolverArgs(args):
+    mem_part = f" -M {args.memory_limit}" if args.memory_limit > 0 else ""
+    return f"--timestamp --watcher-data /dev/null -C {args.cpu_limit} -W {args.wall_clock_limit}{mem_part}"
+
+
+def getRunscriptArgs(args, args_format):
+    parts = {
+        'P': "/artifacts/CWD/benchmark",
+        'C': args.cpu_limit,
+        'W': args.wall_clock_limit,
+        'I': args.intent,
+        'M': args.memory_limit,
+    }
+    return ' '.join([str(parts[c.upper()]) for c in args_format])
+
+def makeBenchmark(problem):
+    if problem:
+        shutil.copy(problem, "./benchmark")
+    else:
+        with open('./benchmark', 'w') as benchmark:
+            benchmark.write(sys.stdin.read())
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("Wrapper for a podman call to a prover image")
+    parser.add_argument("image_name", help="Image name, e.g., eprover:3.0.03-runsolver-arm64")
+    parser.add_argument("-P", "--problem", help="Problem file if not stdin")
+    parser.add_argument("--runscript", default="run_container PCWMI", help="System script and its args, e.g., 'run_E PWI'")
+    parser.add_argument("-C", "--cpu-limit", default=60, type=int, help="Max CPU time in seconds")
+    parser.add_argument("-W", "--wall-clock-limit", default=60, type=int, help="Max wall clock time in seconds")
+    parser.add_argument("-M", "--memory-limit", default=-1, type=int, help="Max memory usage in MB")
+    parser.add_argument("-I", "--intent", default="THM", choices=["THM", "SAT"], help="Intention (THM, SAT, etc)")
+    parser.add_argument("--dry-run", action="store_true", help="dry run")
+    args = parser.parse_args()
+
+    # Format arguments
+    runsolverArgs = getRunsolverArgs(args)
+    runscript, runscriptArgsFormat = args.runscript.split()
+    runscriptArgs = getRunscriptArgs(args, runscriptArgsFormat)
+
+    # Construct podman command
+    command = f"podman run -v .:/artifacts/CWD -t {args.image_name} {runsolverArgs} {runscript} {runscriptArgs}"
+
+    # Run command or print for dry run
+    if args.dry_run:
+        print(command)
+    else:
+        makeBenchmark(args.problem)
+        subprocess.run(command, shell=True)
+        os.remove("./benchmark")
+#------------------------------------------------------------
+\end{verbatim}
+}
+\caption{The {\tt runsystem.py} script}
+\label{runsystem.py}
+\end{figure}
+%--------------------------------------------------------------------------------------------------
+% Geoff and David
+\section{StarExec with Kubernetes}
+\label{StarExecK}
 
 Figure~\ref{AWSArchitecture} shows the architecture of the final implemented system.
 
