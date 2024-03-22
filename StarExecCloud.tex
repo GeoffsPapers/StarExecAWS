@@ -36,7 +36,7 @@
 
 \newcommand{\alex}[1]{{\color{red}{{#1}}}}
 
-\title{Towards StarExec on the AWS Cloud}
+\title{Towards StarExec in the Cloud}
 
 \author{
   David Fuenmayor\inst{1}
@@ -98,7 +98,7 @@ and the impact of ATP is thus extended into many facets of society.
 % commonsense reasoning \cite{MS05}, 
 % and the semantic web \cite{McG04}.
 
-The Thousands of Problems for Theorem Provers (TPTP) World \cite{Sut17} is a well established 
+The Thousands of Problems for Theorem Provers (TPTP) World \cite{Sut24} is a well established 
 infrastructure that supports research, development, and deployment of ATP systems.
 The TPTP World includes 
 the TPTP problem library \cite{Sut17},
@@ -114,8 +114,8 @@ TPTP has contributed to recognized research in 627 publications that cite \cite{
 according to Google Scholar.}
 The web page \href{https://www.tptp.org}{\tt www.tptp.org} provides access to all components.
 
-The TPTP problem library was motivated (see Section~\ref{TPTP}) by the need to provide support
-for meaningful ATP system evaluation.
+The TPTP problem library was motivated by the need to provide support for meaningful ATP system 
+evaluation.
 This need was also (or became) evident in other logic solver communities, e.g., 
 SAT~\cite{HS00-SATLIB} and SMT~\cite{BST10}.
 For many years testing of logic solvers was done on individual developer's computers. 
@@ -131,22 +131,24 @@ StarExec has been central to much progress in logic solvers over the last 10 yea
 supporting many many users.
 StarExec Iowa provides community infrastructure for many logic solver communities,
 e.g., ASP, QBF, SAT, SMT, Termination, etc, while
-StarExec Miami is used by the ATP community.
+StarExec Miami is used by the TPTP community.
 StarExec Miami has features that take advantage of TPTP standards, and is also used to host CASC.
 
 It was recently announced that StarExec Iowa will be decommissioned. 
 The maintainer of StarExec Iowa explained that ``the plan is to operate StarExec as usual for 
 competitions Summer 2024 and Summer 2025, and then put the system into a read-only mode for one 
 year (Summer 2025 to Summer 2026)''.
-The current static StarExec Miami service was funded by a 3-year NSF grant in 2017, which paid 
-for the hardware and three years of system administration.
+The 2017 grant for StarExec Miami paid for the hardware and three years of system administration.
 The hardware is still hosted by the University of Miami High Performance Computing group,
 funded on a shoe-string budget by the TPTP World.
-While StarExec Miami will continue to operate while funding is available, but it will not be able
+While StarExec Miami will continue to operate while funding is available, it will not be able
 to support the large number of logic solver communities that use the larger StarExec Iowa cluster.
 In the long term StarExec will necessarily have to migrate to a commonly available compute service.
-This project will convert the current static StarExec service into a flexible Kubernetes-based 
-service that runs in AWS.
+This paper describes work being done to containerize StarExec and ATP systems, so that they can 
+be run on a broad range of computer platforms.
+Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can
+be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
+One possibility is to host StarExec-Kubernetes in AWS.
 
 \paragraph{This paper is organized as follows:}
 
