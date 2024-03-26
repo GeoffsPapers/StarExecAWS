@@ -105,7 +105,7 @@ the TPTP problem library \cite{Sut17},
 the TSTP solution library \cite{Sut10},
 standards for writing ATP problems and reporting ATP solutions \cite{SS+06,Sut08-KEAPPA},
 tools and services for processing ATP problems and solutions \cite{Sut10},
-and it supports the the annual CADE ATP System Competition (CASC) \cite{Sut16}.
+and it supports the the annual CADE ATP System Competition (CASC)~\cite{Sut16}.
 Since its first release in 1993 the ATP community has used the TPTP World as an appropriate and 
 convenient infrastructure for ATP system development, evaluation, and application.
 The TPTP World has a diverse, engaged, and sustained user community, with various parts of the 
@@ -157,11 +157,100 @@ One possibility is to host StarExec-Kubernetes in AWS.
 \section{Background}
 \label{Background}
 
-Containerization
+%--------------------------------------------------------------------------------------------------
+\subsection{Building ATP Systems}
+\label{Building}
 
-Docker and Podman
+ATP Systems are complex pieces of software, typically using advanced data structures~\cite{Sch13}, 
+sophisticated algorithms~\cite{Vor01}, and tricky code optimizations\cite{Sch06}.
+They are written in a variety of programming languages: Prolog~\cite{Ott23,Hol23}, 
+Scala~\cite{SB18}, C~\cite{SCV19}, C++~\cite{RV02-AICOMM}, OCaml~\cite{Kor06}, Python~\cite{SP20}, 
+etc.
+Their build processes include techniques such as parser generators~\cite{Ste21}, Makefiles,
+code repositories, specific versions of libraries, etc.
+For a user who is focussed on an application of ATP
+% , e.g. (with a few exemplar references), in 
+% mathematics \cite{Qua92-Book,MP96}, logic~\cite{GO86,Jec95}, management~\cite{PB+92-TR,PM94}, 
+% planning \cite{SE94}, 
+installing an ATP system can be a deal breaker, and many early users selected a weaker system, 
+e.g., Otter~\cite{McC03-Otter}, for their experiments because it was readily available and easy 
+enough to install.
+% As the TPTP World evolved it was clear that more powerful ATP systems were available, especially
+% evident in the CADE ATP System Competition (CASC)~\cite{Sut16}.
+% However, these more powerful systems were often not as easy to obtain and install.
+% This was a key motivation for the creation of the SystemOnTPTP service~\cite{Sut00-CADE-17}.
+% SystemOnTPTP allows users to
+% The ATP systems in SystemOnTPTP are installed by the third author, often with help from the
+% individual system developers.
+There have been some proposals for standardising the ATP system build process, e.g.,
+\href{https://tptp.org/Proposals/SystemBuild.html}{tptp.org/Proposals/SystemBuild.html}, 
+but the diversity of ATP system software makes conformity nigh impossible.
+An alternative is to push the task back on the system developers, and one approach to this is
+containerization, as discussed in Section~\ref{Containerization}.
 
-Kubernetes
+%--------------------------------------------------------------------------------------------------
+\subsection{StarExec}
+\label{StarExec}
+
+The need to provide support for meaningful system evaluation has been recognized in many logic 
+solver communities, e.g., TPTP~\cite{SS01}, SAT~\cite{HS00-SATLIB}, SMT~\cite{CSW15},
+Termination~\cite{MZ07}, etc.
+For many years testing of logic solvers was done on individual developer's computers. 
+In 2010 a proposal for centralised hardware and software support was developed,
+and in 2011 a \$2.11 million NSF grant\footnote{%
+NSF Awards 1058748 and 1058925, led by Aaron Stump and Cesare Tinelli at the University of Iowa} 
+was obtained.
+This grant led to the development and availability of StarExec Iowa~\cite{SST14} in 2012,
+and a subsequent \$1.00 million grant\footnote{%
+NSF Award 1730419} in 2017 expanded StarExec to Miami.
+StarExec has been central to much progress in logic solvers over the last 10 years, supporting
+16 logic solver communities, used for running many annual competitions~\cite{BB+19}, and 
+supporting many many users.
+
+It was recently announced that StarExec Iowa will be decommissioned. 
+The maintainer of StarExec Iowa explained that ``the plan is to operate StarExec as usual for 
+competitions Summer 2024 and Summer 2025, and then put the system into a read-only mode for one 
+year (Summer 2025 to Summer 2026)''.
+While StarExec Miami will continue to operate while funding is available, but it will not be able
+to support the large number of logic solver communities that use the larger StarExec Iowa cluster.
+In the long run it will be necessary for StarExec users to transition to new environments,
+and several plans are (at the time of writing) being discussed.
+One effort is that described in the paper.
+
+%--------------------------------------------------------------------------------------------------
+\subsection{Containerization}
+\label{Containerization}
+
+{\em This section was written with the help of ChatGPT~3.5.}
+
+Containerization is a technology that allows developers to package an application and its 
+dependencies into a standardized unit called a container. 
+These containers encapsulate the application code, runtime, libraries, and other necessary 
+components, providing a consistent and isolated environment for running the application 
+across different computing environments.
+One of the key benefits of containerization is its ability to abstract away the underlying 
+infrastructure. 
+Containers are designed to be lightweight and portable, making it easy to deploy applications 
+across various platforms, such as laptops, servers, virtual machines, and cloud environments. 
+This portability ensures that applications behave consistently regardless of the underlying 
+infrastructure, simplifying the development and deployment process.
+Furthermore, containerization offers several advantages in terms of scalability, resource 
+efficiency, and security. 
+Containers share the host operating system's kernel, which reduces overhead compared to 
+traditional virtualization techniques. 
+As a result, containers can be started and stopped quickly, allowing for rapid scaling of 
+applications to meet changing demand. 
+Containers provide a level of isolation that helps prevent conflicts between applications and 
+enhances security by limiting the impact of potential vulnerabilities.
+
+Popular containerization platforms like Docker, Podman, and Kubernetes have played a significant 
+role in popularizing container technology. 
+These platforms provide tools for building, distributing, orchestrating, and managing containers 
+at scale. 
+Docker, for example, introduced a user-friendly interface and a standardized format for defining 
+container images, making it easier for developers to adopt containerization in their workflow. 
+Kubernetes, on the other hand, focuses on container orchestration and automating the deployment, 
+scaling, and management of containerized applications in production environments.
 
 %--------------------------------------------------------------------------------------------------
 % Jack and Geoff and David
