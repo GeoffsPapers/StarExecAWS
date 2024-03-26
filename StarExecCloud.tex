@@ -207,6 +207,17 @@ StarExec has been central to much progress in logic solvers over the last 10 yea
 16 logic solver communities, used for running many annual competitions~\cite{BB+19}, and 
 supporting many many users.
 
+Figure~\ref{ArchitectureS} shows the architecture of the currently deployed StarExec.
+EXPLAIN IT ALL HERE.
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{ArchitectureS}
+\caption{StarExec Architecture}
+\label{ArchitectureS}
+\end{center}
+\end{figure}
+
 It was recently announced that StarExec Iowa will be decommissioned. 
 The maintainer of StarExec Iowa explained that ``the plan is to operate StarExec as usual for 
 competitions Summer 2024 and Summer 2025, and then put the system into a read-only mode for one 
@@ -390,7 +401,36 @@ where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
 \subsection{Running ATP System Containers}
 \label{Running}
 
+%--------------------------------------------------------------------------------------------------
+% Geoff and David
+\section{StarExec with Kubernetes}
+\label{StarExecK}
+
+Figure~\ref{ArchitectureK} shows the architecture of the final implemented system.
+
 \begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{ArchitectureK}
+\caption{Architecture in Kubernetes}
+\label{ArchitectureK}
+\end{center}
+\end{figure}
+
+%--------------------------------------------------------------------------------------------------
+% Geoff
+\section{Conclusion}
+\label{Conclusion}
+
+This paper 
+%--------------------------------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{Bibliography.bib}
+%--------------------------------------------------------------------------------------------------
+\appendix
+
+\newpage
+\section{{\tt runsystem.py}}
+\label{runsystem}
 {\footnotesize
 \begin{verbatim}
 #------------------------------------------------------------
@@ -401,11 +441,9 @@ import subprocess
 import os, sys
 import shutil
 
-
 def getRunsolverArgs(args):
     mem_part = f" -M {args.memory_limit}" if args.memory_limit > 0 else ""
     return f"--timestamp --watcher-data /dev/null -C {args.cpu_limit} -W {args.wall_clock_limit}{mem_part}"
-
 
 def getRunscriptArgs(args, args_format):
     parts = {
@@ -423,7 +461,6 @@ def makeBenchmark(problem):
     else:
         with open('./benchmark', 'w') as benchmark:
             benchmark.write(sys.stdin.read())
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Wrapper for a podman call to a prover image")
@@ -455,33 +492,6 @@ if __name__ == "__main__":
 #------------------------------------------------------------
 \end{verbatim}
 }
-\caption{The {\tt runsystem.py} script}
-\label{runsystem.py}
-\end{figure}
-%--------------------------------------------------------------------------------------------------
-% Geoff and David
-\section{StarExec with Kubernetes}
-\label{StarExecK}
-
-Figure~\ref{AWSArchitecture} shows the architecture of the final implemented system.
-
-\begin{figure}[htb]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{AWSArchitecture}
-\caption{AWS architecture}
-\label{AWSArchitecture}
-\end{center}
-\end{figure}
-
-%--------------------------------------------------------------------------------------------------
-% Geoff
-\section{Conclusion}
-\label{Conclusion}
-
-This paper 
-%--------------------------------------------------------------------------------------------------
-\bibliographystyle{plain}
-\bibliography{Bibliography.bib}
 %--------------------------------------------------------------------------------------------------
 \end{document}
 %--------------------------------------------------------------------------------------------------
