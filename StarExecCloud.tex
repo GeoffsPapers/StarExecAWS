@@ -416,19 +416,29 @@ where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
 \subsection{Running ATP System Containers}
 \label{Running}
 
-A Python script {\tt runsolver.py} is available to run a containerized ATP system from the 
+A Python script {\tt runsystem.py} is available to run a containerized ATP system from the 
 command line.
 The script is shown in Appendix~\ref{runsystem}.
-Minimally the script must have the container name (JACK IS THAT A MISNOMER IN THE SCRIPT?)
+Minimally the script must have the {\tt -runsolver} container name (JACK IS THAT A MISNOMER IN THE SCRIPT?)
 as a command line argument.
-By default the script starts the container in {\tt podman}, taking the problem from {\tt stdin},
-imposing a CPU limit and wall clock limit of 60s, imposing no memory limit, asking the ATP system
-to try prove the problem's conjecture is a theorem, by executing the container's 
-{\tt run\_container} script with the problem, CPU limit, wall clock limit, memory limit, and
-the proof request as the script's arguments.
-All the components can be changed via command line options to {\tt runsolver.py}.
+By default {\tt runsystem.py} starts the {\tt -runsolver} container in {\tt podman}, taking the 
+problem from {\tt stdin}, imposing CPU and wall clock time limits of 60s, imposing no memory 
+limit, with the intention that the ATP system should try prove that the problem's conjecture is 
+a theorem.
 The problem file is passed into the container using Podman volume mounting, copying the
-problem file to {\tt /artifacts/CWD/benchmark} inside the executing container.
+problem to the {\tt /artifacts/CWD/benchmark} file inside the executing container.
+All the parameters can be changed via command line options to {\tt runsystem.py}.
+
+The entrypoint in the {\tt -runsolver} container is the {\tt runsolver} utility, which in
+turn starts the {\tt run\_container} script with the problem, CPU limit, wall clock limit, 
+memory limit, and the proof request as arguments.
+Each {\tt -runsolver} container's {\tt run\_container} script is responsible for starting the 
+ATP system - this action varies tremendously between ATP systems, and is thus usually provided 
+by the system developer.
+For example, E has its own script {\tt run\_E} that invokes the {\tt eprover} or {\tt eprover-ho}
+binary depending on whether the problem is first-order or higher-order, and depending on the
+intention passed in appropriate command line arguments are given to the selected binary along
+with the problem file and time limit.
 
 %--------------------------------------------------------------------------------------------------
 % Geoff and David
