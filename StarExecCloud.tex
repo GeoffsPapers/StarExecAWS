@@ -208,7 +208,22 @@ StarExec has been central to much progress in logic solvers over the last 10 yea
 supporting many many users.
 
 Figure~\ref{ArchitectureS} shows the architecture of the currently deployed StarExec.
-EXPLAIN IT ALL HERE.
+The hardware consists of a single head node and multiple compute nodes.
+The head node provides the browser interface for users, in particular it accepts job requests
+that generate job pairs consisting of an ATP system and a problem file, and distributes the
+pairs to the compute nodes using the SUN Grid Engine (SGE).
+(For development and testing, the head node can also run job pairs itself using a local backend.)
+The head node maintains a relational MariaDB database, and all the nodes access an NFS mounted
+shared file system.
+The database records everything, including the ATP systems' files and the problem files in the 
+file system.
+Job pairs executing on a compute node have their time and memory usage limited and recorded
+by the {\tt BenchExec}~\cite{} (Iowa) or {\tt runsolver}~\cite{} (Miami) wrapper.
+The results and resource usage data from completed job pairs are stored in the file system, 
+and recorded in the database.
+The browser interface provides the necessary facilities to upload ATP systems, upload problem
+files, browse the ATP systems and problems, create jobs, track job progress, browse and download
+job results, and delete ATP systems, problems, jobs, etc.
 
 \begin{figure}[htb]
 \begin{center}
@@ -401,6 +416,20 @@ where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
 \subsection{Running ATP System Containers}
 \label{Running}
 
+A Python script {\tt runsolver.py} is available to run a containerized ATP system from the 
+command line.
+The script is shown in Appendix~\ref{runsystem}.
+Minimally the script must have the container name (JACK IS THAT A MISNOMER IN THE SCRIPT?)
+as a command line argument.
+By default the script starts the container in {\tt podman}, taking the problem from {\tt stdin},
+imposing a CPU limit and wall clock limit of 60s, imposing no memory limit, asking the ATP system
+to try prove the problem's conjecture is a theorem, by executing the container's 
+{\tt run\_container} script with the problem, CPU limit, wall clock limit, memory limit, and
+the proof request as the script's arguments.
+All the components can be changed via command line options to {\tt runsolver.py}.
+The problem file is passed into the container using Podman volume mounting, copying the
+problem file to {\tt /artifacts/CWD/benchmark} inside the executing container.
+
 %--------------------------------------------------------------------------------------------------
 % Geoff and David
 \section{StarExec with Kubernetes}
@@ -464,14 +493,22 @@ def makeBenchmark(problem):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Wrapper for a podman call to a prover image")
-    parser.add_argument("image_name", help="Image name, e.g., eprover:3.0.03-runsolver-arm64")
-    parser.add_argument("-P", "--problem", help="Problem file if not stdin")
-    parser.add_argument("--runscript", default="run_container PCWMI", help="System script and its args, e.g., 'run_E PWI'")
-    parser.add_argument("-C", "--cpu-limit", default=60, type=int, help="Max CPU time in seconds")
-    parser.add_argument("-W", "--wall-clock-limit", default=60, type=int, help="Max wall clock time in seconds")
-    parser.add_argument("-M", "--memory-limit", default=-1, type=int, help="Max memory usage in MB")
-    parser.add_argument("-I", "--intent", default="THM", choices=["THM", "SAT"], help="Intention (THM, SAT, etc)")
-    parser.add_argument("--dry-run", action="store_true", help="dry run")
+    parser.add_argument("image_name", 
+help="Image name, e.g., eprover:3.0.03-runsolver-arm64")
+    parser.add_argument("-P", "--problem", 
+help="Problem file if not stdin")
+    parser.add_argument("--runscript", default="run_container PCWMI", 
+help="System script and its args, e.g., 'run_E PWI'")
+    parser.add_argument("-C", "--cpu-limit", default=60, type=int, 
+help="Max CPU time in seconds")
+    parser.add_argument("-W", "--wall-clock-limit", default=60, type=int, 
+help="Max wall clock time in seconds")
+    parser.add_argument("-M", "--memory-limit", default=-1, type=int, 
+help="Max memory usage in MB")
+    parser.add_argument("-I", "--intent", default="THM", choices=["THM", "SAT"], 
+help="Intention (THM, SAT, etc)")
+    parser.add_argument("--dry-run", action="store_true", 
+help="dry run")
     args = parser.parse_args()
 
     # Format arguments
