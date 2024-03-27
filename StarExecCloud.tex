@@ -283,16 +283,21 @@ scaling, and management of containerized applications in production environments
 \section{Containerizing StarExec and ATP Systems}
 \label{Containerizing}
 
-Base build is Ubuntu.
-The {\tt artifacts} directory, where all relevant executables are copied when an ATP system
-is executed, is created as part of this container.
+The StarExec and ATP systems' containers are built on an Ubuntu base.
+The {\tt ubuntu-build} container takes the {\TT ubuntu:latest} from WHERE, uses {\tt apt-get}
+to add common software such as {\tt cmake}, {\tt git}, {\tt tcsh}, {\tt python3}, and {\tt wget},
+and creates an {\tt artifacts} directory where the components required for an ATP system
+execution are placed.
+
+ATP system containers are built in three parts.
+
 
 {\tt dockerhub} for storing containers.
 {\tt tptpstarexec} repository.
 One directory for StarExec, one directory for each ATP system.
 
 %--------------------------------------------------------------------------------------------------
-% David
+% Jack
 \subsection{StarExec}
 \label{StarExec}
 
