@@ -74,6 +74,7 @@ This paper describes work being done to build StarExec and ATP systems images, s
 be run in containers on a broad range of computer platforms. 
 Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can 
 be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
+One possibility is to host StarExec-Kubernetes in AWS.
 \end{abstract}
 %--------------------------------------------------------------------------------------------------
 % Geoff
@@ -300,6 +301,10 @@ scaling, and management of containerized applications in production environments
 \section{Containerizing StarExec}
 \label{ContainerizingStarExec}
 
+A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
+This allows StarExec users to build and test StarExec installation packages on their own 
+computers before deploying to the StarExec Miami installation.
+
 All the files for building the StarExec image is available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-containerized}{\tt github.com/StarExecMiami/starexec-containerized}\\
 %--------------------------------------------------------------------------------------------------
@@ -475,13 +480,53 @@ with the problem file and time limit.
 \section{StarExec with Kubernetes}
 \label{StarExecK}
 
-Figure~\ref{ArchitectureK} shows the architecture of the final implemented system.
+StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
+in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
+system and a problem. 
+MariaDB is used to store job information and results, and NFS is used to share disk space between 
+the head node and compute nodes. 
+StarExec currently offers two backends for running job pairs: the local backend runs pairs on 
+the same computer as the head node, and the Sun Grid Engine (SGE) backend sends pairs out to 
+compute nodes. 
+This structure is inflexible, and must be configured to the specific hardware available. 
+The plan is to use a containerized StarExec (see Section~\ref{ContainerizingStarExec}), replace 
+SGE with Kubernetes, remove any MariaDB-specific bindings so that other database products can be 
+used, and use containerized ATP systems (see Section~\ref{ContainerizingATPSystems}).
+Figure~\ref{ArchitectureK} shows the generic architecture.
 
 \begin{figure}[htb]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{ArchitectureK}
 \caption{Architecture in Kubernetes}
 \label{ArchitectureK}
+\end{center}
+\end{figure}
+
+An Amazon Research Award\footnote{%
+Amazon Research Award, Fall 2023. Any opinions, findings, and conclusions or recommendations 
+expressed in this material are those of the authors, and do not reflect the views of Amazon.} 
+has been granted to implement StarExec with Kubernetes in AWS.
+This instantiates the the generic implementation as follows:
+\begin{packed_itemize}
+\item The Kubernetes host will be Amazon Elastic Kubernetes Service (EKS)
+\item The head and compute nodes will be Amazon EC2 nodes.
+\item The database will be Amazon Relational Database (RDS).
+\item The file system will be Amazon Elastic File System (EFS).
+\item The ATP systems' containerization will be made compatible with (possibly be exactly) the 
+      Amazon Trusted Solver (ATS) format.
+\end{packed_itemize}
+
+The entire migration of StarExec into AWS will be done using the ``infrastructure-as-code'' 
+paradigm, using Amazon CloudFormation. 
+The implementation will be tested by copying the TPTP community from StarExec Miami onto the 
+new StarExec AWS.
+Figure~\ref{ArchitectureAWS} shows the AWS-specific architecture.
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{ArchitectureAWS}
+\caption{Architecture in EKS on AWS}
+\label{ArchitectureAWS}
 \end{center}
 \end{figure}
 
@@ -497,7 +542,7 @@ Kubernetes can be used to orchestrate distribute of StarExec job pairs over what
 nodes are available.
 
 This is ongoing work -- some of the work is still ``in progress'', particularly embedding
-StarExec in Kubernetes.
+StarExec in Kubernetes on AWS.
 Hopefully the future will include StarExec being flexibly available in online compute clusters.
 
 %--------------------------------------------------------------------------------------------------
@@ -509,7 +554,7 @@ Hopefully the future will include StarExec being flexibly available in online co
 \newpage
 \section{{\tt run\_image.py}}
 \label{runsystem}
-{\footnotesize
+{\small
 \begin{verbatim}
 #--------------------------------------------------------------------------------
 #!/usr/bin/env python3
