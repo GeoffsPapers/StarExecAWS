@@ -4,6 +4,7 @@
 \usepackage{setspace}
 \usepackage{verbatim}
 \usepackage{amssymb}
+\usepackage{wasysym}
 \usepackage[straightquotes]{newtxtt}
 
 %----Suppress extra space in texttt mode
@@ -76,7 +77,7 @@ The first step has been to containerize StarExec and ATP systems so that they ca
 broad range of computer platforms. 
 The next step in process is to write a new backend in StarExec so that Kubernetes can be used to 
 orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
-One possibility is to host StarExec-Kubernetes in AWS.
+FIX HERE One possibility is to host StarExec-Kubernetes in AWS.
 \end{abstract}
 %--------------------------------------------------------------------------------------------------
 % Geoff
@@ -167,10 +168,12 @@ The next step in process is to write a new backend in StarExec so that Kubernete
 orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
 Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can
 be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
-One possibility is to host StarExec-Kubernetes in AWS.
-\dav{We could say something like: supported by an AWS AR grant, we will implement the proposed approach by deploying a new (re-engineered) version of StarExec in AWS. This StarExec instance will not only be fully functional to the community (e.g. run  SystemOnTPTP, CASC competitions, etc. as much as our budget allows), but shall also serve as a an exemplary implementation (IaC template) for those willing to deploy their own (possibly customized) StarExec in their own infrastructure (cloud or on-premises).}
-
-\dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
+Supported by an Amazon Research Award (see Section~\ref{StarExecK}) a new version of StarExec
+will be deployed in AWS.
+This StarExec instance will be fully functional and available to the community (as much as our 
+budget allows). 
+It will also serve as an exemplary implementation for those willing to deploy their own, possibly 
+customized, StarExec on their own computers or in the cloud.
 
 \paragraph{This paper is organized as follows:}
 Section~\ref{Background} provides a short background to ATP systems, StarExec, and 
@@ -238,9 +241,8 @@ supporting many many users.
 Figure~\ref{ArchitectureS} shows the architecture of the currently deployed StarExec.
 The hardware consists of a single head node and multiple compute nodes.
 The head node provides the browser interface for users, in particular it accepts job requests
-that generate job pairs consisting of an ATP system and a problem file, and distributes the
-pairs to the compute nodes using the SUN Grid Engine (SGE).
-\dav{Maybe we can explain which roles is SGE taking here (batch/job scheduling, cluster management, etc). I have seen also OAR as backend... }
+that generate job pairs consisting of an ATP system and a problem file, does internal scheduling,
+and uses the SUN Grid Engine (SGE) cluster management to distribute the pairs to the compute nodes.
 (For development and testing, the head node can also run job pairs itself using a local backend.)
 The head node maintains a relational MariaDB database, and all the nodes access an NFS mounted
 shared file system.
@@ -320,6 +322,7 @@ scaling, and management of containerized applications in production environments
 \dav{On justifying this effort: Containerizing StarExec components feels natural as a first step towards making it 'cloud-native'... and so on}
 	
 \dav{The stuff below was moved from Section \ref{StarExecK}. I think it belongs here. In this section we can comment on what we have done so far (putting current StarExec as a whole in a single container). However, a professional solution will have to split components in different (communicating) containers (two obvious candidates being the database and the batch scheduler SGE). In k8s, the StarExec components/containers would run together as a single pod. In podman we can also group containers in a similar way (analogous to docker compose).}
+\dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
 
 StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
 in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
@@ -339,8 +342,11 @@ All the files for containerizing StarExec are available from~\ldots \\
 \section{Containerizing ATP Systems}
 \label{ContainerizingATPSystems}
 
-\dav{Again, we shall justify why we are doing this. In a sense, containerizing ATPs is independent from containerizing StarExec (or making it 'cloud-native'). Of course, both efforts play well together...
-It would be great for us if ATP developers become super enthusiastic about containerizing their babies after reading this section ;)}
+While the grand plan is to deploy containerized ATP system in a containerized StarExec, and hence
+in a Kubernetes hosted version of StarExec, containerizing ATP systems is independently useful 
+because it allows ATP systems to be easily deployed in users' applications.
+It would be great if ATP systems developers become super enthusiastic about containerizing their 
+systems after reading this section~\smiley.
 
 The ATP systems' are containerized in a hierarchy, show in Figure~\ref{ImageDAG}.
 The underlying operating system is {\tt ubuntu:latest} from {\tt dockerhub}~\ldots\\
@@ -359,21 +365,8 @@ To support these utilities some libraries that are not part of the {\tt ubuntu-b
 to be added.
 The {\tt /benchmark} directory, where the TPTP problem for the ATP system to solve is placed, is
 created as part of this container.
-
-On top of {\tt ubuntu-build} are the individual ATP system's {\em ATP-system-name}{\tt-build}
-containers, and on top of that and {\tt tptp-world-build} are the final 
-{\em ATP-system-name}{\tt -runsolver} containers.
-The details of building the {\em ATP-system-name}{\tt -*} containers are provided below.
-
-The {\em ATP-system-name}{\tt -runsolver} containers are pushed to {\tt dockerhub} in~\ldots\\
-\hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
-which has a directory for each ATP system.
-The pushed containers are tagged as 
-{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver-}{\em architecture},
-where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
-All the files for containerizing the ATP system are available from~\ldots \\
-\hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-kubernetes/tree/main/images}{\tt github.com/StarExecMiami/starexec-kubernetes/tree/main/images}\\
-A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
+The details of building the {\em ATP-system-name}{\tt -*} containers are provided in
+Section~\ref{BuildingATPSystemImages}.
 
 \begin{figure}[htb]
 \begin{center}
@@ -384,10 +377,12 @@ A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
-\subsection{Containerizing ATP Systems}
+\subsection{Creating ATP System Containers}
 \label{BuildingATPSystemImages}
 
-Each {\em ATP-system-name}{\tt-build} adds the ATP system's executables to {\tt ubuntu-build}.
+Each ATP system's {\em ATP-system-name}{\tt-build} is built on top of {\tt ubuntu-build}, and 
+with {\tt tptp-world-build} forms the base for the final {\em ATP-system-name}{\tt -runsolver}.
+{\em ATP-system-name}{\tt-build} adds the ATP system's executables to {\tt ubuntu-build}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
@@ -475,6 +470,16 @@ ENTRYPOINT ["runsolver"]
 \label{E---runsolver}
 \end{figure}
 
+The {\em ATP-system-name}{\tt -runsolver} containers are pushed to {\tt dockerhub} in~\ldots\\
+\hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
+which has a directory for each ATP system.
+The pushed containers are tagged as 
+{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver-}{\em architecture},
+where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
+All the files for containerizing the ATP system are available from~\ldots \\
+\hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-kubernetes/tree/main/images}{\tt github.com/StarExecMiami/starexec-kubernetes/tree/main/images}\\
+A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
+
 %--------------------------------------------------------------------------------------------------
 \subsection{Running ATP System Containers}
 \label{Running}
@@ -507,6 +512,7 @@ with the problem file and time limit.
 \label{StarExecK}
 
 \dav{Changed the title. I will work on this section soon. The idea is to sell the part on re-engineering StarExec to support two backends: podman and k8s. There will be a final section on an exemplary 'reference' deployment on AWS using their managed k8s infrastructure (EKS, etc.)}
+\dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
 
 \dav{recall StarExec current architecture}
 
