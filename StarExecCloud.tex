@@ -37,6 +37,7 @@
 % \setlength{\textfloatsep}{5.0pt plus 2.0pt minus 0.0pt}
 
 \newcommand{\dav}[1]{{\color{red}{David: {#1}}}}
+\newcommand{\jack}[1]{{\color{red}{Jack: {#1}}}}
 
 \title{Towards StarExec in the Cloud}
 
@@ -248,15 +249,15 @@ and uses the SUN Grid Engine (SGE) cluster management to distribute the pairs to
 The head node maintains a relational MariaDB database, and all the nodes access an NFS mounted
 shared file system.
 The database records everything, including the ATP systems' files and the problem files in the 
-file system.
+file system. \jack{My understanding is that many things like the benchmarks and solvers are not stored in mariadb, but are just on disk on the head node and get copied to NFS directories when they're needed by job pairs on the compute nodes. I think paths to them are stored in mariadb though. That's probably what you meant, but to me the previous sentence sounded like it was saying benchmarks/solvers are stored in the database.}
 Job pairs executing on a compute node have their time and memory usage limited and reported
-by the {\tt runsolver}~\cite{\cite{Rou11}} utility (the {\tt BenchExec}~\cite{BLW19} utility in 
+by the {\tt runsolver}~\cite{Rou11} utility (the {\tt BenchExec}~\cite{BLW19} utility in 
 StarExec Iowa).
 The results and resource usage data from completed job pairs are stored in the file system, 
 and recorded in the database.
 The browser interface provides the necessary facilities to upload ATP systems, upload problem
 files, browse the ATP systems and problems, create jobs, track job progress, browse and download
-job results, and delete ATP systems, problems, jobs, etc.
+job results, and delete ATP systems, problems, jobs, etc. \jack{Also for creating users and controlling their resource limits and permissions}
 
 \begin{figure}[htb]
 \begin{center}
@@ -270,7 +271,7 @@ It was recently announced that StarExec Iowa will be decommissioned.
 The maintainer of StarExec Iowa explained that ``the plan is to operate StarExec as usual for 
 competitions Summer 2024 and Summer 2025, and then put the system into a read-only mode for one 
 year (Summer 2025 to Summer 2026)''.
-While StarExec Miami will continue to operate while funding is available, but it will not be able
+While StarExec Miami will continue to operate while funding is available, it will not be able
 to support the large number of logic solver communities that use the larger StarExec Iowa cluster.
 In the long run it will be necessary for StarExec users to transition to new environments,
 and several plans are (at the time of writing) being discussed.
@@ -320,10 +321,9 @@ scaling, and management of containerized applications in production environments
 %A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
 %This allows StarExec users to build and test StarExec installation packages on their own computers before deploying to the StarExec Miami installation.
 
-\dav{On justifying this effort: Containerizing StarExec components feels natural as a first step towards making it 'cloud-native'... and so on}
-	
-\dav{The stuff below was moved from Section \ref{StarExecK}. I think it belongs here. In this section we can comment on what we have done so far (putting current StarExec as a whole in a single container). However, a professional solution will have to split components in different (communicating) containers (two obvious candidates being the database and the batch scheduler SGE). In k8s, the StarExec components/containers would run together as a single pod. In podman we can also group containers in a similar way (analogous to docker compose).}
-\dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
+% \dav{On justifying this effort: Containerizing StarExec components feels natural as a first step towards making it 'cloud-native'... and so on}
+% \dav{The stuff below was moved from Section \ref{StarExecK}. I think it belongs here. In this section we can comment on what we have done so far (putting current StarExec as a whole in a single container). However, a professional solution will have to split components in different (communicating) containers (two obvious candidates being the database and the batch scheduler SGE). In k8s, the StarExec components/containers would run together as a single pod. In podman we can also group containers in a similar way (analogous to docker compose).}
+% \dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
 
 StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
 in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
@@ -332,18 +332,46 @@ MariaDB is used to store job information and results, and NFS is used to share d
 the head node and compute nodes. 
 StarExec currently offers two backends for running job pairs: the local backend runs pairs on 
 the same computer as the head node, and the Sun Grid Engine (SGE) backend sends pairs out to 
-compute nodes. 
+compute nodes.
 
-\dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
-
-All the files for containerizing StarExec are available from~\ldots \\
+So far, the head node with a local backend has been successfully containerized.
+All the files for containerizing StarExec with a local backend are available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-containerized}{\tt github.com/StarExecMiami/starexec-containerized}\\
+
+The repository includes the following:
+\begin{packed_itemize}
+    \item A Dockerfile for building a StarExec image with a local backend.
+    \item{A StarExec configuration file (database credentials, special StarExec directory paths, default StarExec users, NFS mount path, etc.).}
+    \item{A few binaries that StarExec depends on, such as runsolver.}
+    \item{Various scripts used in the Dockerfile to configure and build StarExec. \\
+        These scripts are responsible for: 
+        
+        \begin{packed_itemize}
+            \item{Installing and configuring StarExec dependencies including Java, Apache Tomcat, ant, MariaDB, sass and more.}
+            \item{Creating new users that StarExec will use for running jobs.}
+            \item{Changing permissions on certain files and directories that StarExec depends on.}
+            \item{Building StarExec using ant (which also initializes the database).}
+        \end{packed_itemize}
+    }
+    \item{A README.md file showing how to build and run the image.}
+\end{packed_itemize}
+
+The deployment of StarExec Miami was a real challenge.
+Creating an instance of StarExec
+is complicated and requires configuring many different pieces of software.
+The starexec-containerized repository aims to make this process simple 
+and repeatable, eliminating the need to understand the complex environment requirements of StarExec. 
+While the containerization of StarExec with a local backend is somewhat valuable on its own,
+it is most importantly a first step towards the automatic deployment of a full StarExec cluster in the cloud.
+Section~\ref{StarExecK} explains how this full cluster deployment could be done.
+
+% \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
 
 %--------------------------------------------------------------------------------------------------
 \section{Containerizing ATP Systems}
 \label{ContainerizingATPSystems}
 
-While the grand plan is to deploy containerized ATP system in a containerized StarExec, and hence
+While the grand plan is to deploy containerized ATP systems in a containerized StarExec, and hence
 in a Kubernetes hosted version of StarExec, containerizing ATP systems is independently useful 
 because it allows ATP systems to be easily deployed in users' applications.
 It would be great if ATP systems developers become super enthusiastic about containerizing their 
@@ -365,7 +393,7 @@ used by an ATP system is added.
 To support these utilities some libraries that are not part of the {\tt ubuntu-build} have
 to be added.
 The {\tt /benchmark} directory, where the TPTP problem for the ATP system to solve is placed, is
-created as part of this container.
+created as part of this container. \jack{/benchmark is created in tptp-world-build, but we never use it. Our run-image.py script copies the benchmark to ./benchmark outside the container which gets mapped to /artifacts/CWD/benchmark in the container. I suggest we just remove that line from tptp-world-build.}
 The details of building the {\em ATP-system-name}{\tt -*} containers are provided in
 Section~\ref{BuildingATPSystemImages}.
 
@@ -427,9 +455,9 @@ RUN cp PROVER/eprover-ho /artifacts/eprover-ho
 \end{figure}
 
 Each {\em ATP-system-name}{\tt -runsolver} is based on {\em ATP-system-name}{\tt-build} and 
-{\tt tptp-world-build}.
+{\tt tptp-world-build}. \jack{These -runsolver images *primarily* extend tptp-world-build and they are expected to only copy over what is necessary from their -build image. As such, if the prover requires a complicated environment (not just a simple static binary), their -runsolver dockerfile might need to duplicate a lot of the work they did in their -build image. This is because of the "AS" in the "FROM" line in the dockerfile.}
 {\em ATP-system-name}{\tt -runsolver} adds the {\tt runsolver} utility to limit and report
-the resource usage of the ATP system.
+the resource usage of the ATP system. \jack{Technically it doesn't. runsolver is added in tptp-world-build.}
 Note how the containerization uses the default {\tt :latest} tagged 
 {\em ATP-system-name}{\tt-build}. 
 The executables from {\em ATP-system-name}{\tt -runsolver} are copied from its 
@@ -486,9 +514,9 @@ A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 \label{Running}
 
 A Python script {\tt run\_image.py} is available to run a containerized ATP system from the 
-command line.
+command line. \jack{Maybe "available to simplify and standardize running containerized ATP systems", since they could just be run using docker/podman directly.}
 The script is shown in Appendix~\ref{runsystem}.
-Minimally the script must have the {\em ATP-system-name}{\tt -runsolver} as a command 
+Minimally the script must have the {\em ATP-system-name}{\tt -runsolver} \jack{(image name)} as a command 
 line argument.
 By default {\tt run\_image.py} runs the {\em ATP-system-name}{\tt -runsolver} in a
 {\tt podman} container, taking the problem from {\tt stdin}, imposing CPU and wall clock time 
@@ -501,12 +529,12 @@ All the parameters can be changed via command line options to {\tt run\_image.py
 The entrypoint in {\em ATP-system-name}{\tt -runsolver} is the {\tt runsolver} utility, 
 which in turn starts the {\tt run\_system} script with the problem, CPU limit, wall clock limit, 
 memory limit, and the proof request as arguments.
-Each {\tt run\_system} script is responsible for starting theat ATP system -- this action varies 
+Each {\tt run\_system} script is responsible for starting the ATP system -- this action varies 
 tremendously between ATP systems, and is thus usually provided by the system developer.
 For example, E has its own script {\tt run\_E} that invokes the {\tt eprover} or {\tt eprover-ho}
 binary depending on whether the problem is first-order or higher-order, and depending on the
 intention passed in appropriate command line arguments are given to the selected binary along
-with the problem file and time limit.
+with the problem file and time limit. \jack{Maybe it should be emphasized that run\_system wraps run\_E (that run\_E isn't an instance of the generic idea.)}
 
 %--------------------------------------------------------------------------------------------------
 \section{Towards a Cloud-native StarExec}
