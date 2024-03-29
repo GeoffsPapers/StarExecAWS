@@ -7,11 +7,12 @@
 \usepackage{wasysym}
 \usepackage[straightquotes]{newtxtt}
 
-%----Suppress extra space in texttt mode
-%\AddToHook{cmd/ttfamily/after}{\frenchspacing}
 
 %----Making things more compact
-\newcommand{\smalltt}[1]{\small \texttt{#1}}
+%----Suppress extra space in texttt mode
+%\AddToHook{cmd/ttfamily/after}{\frenchspacing}
+% \newcommand{\smalltt}[1]{\small \texttt{#1}}
+
 \newenvironment{packed_itemize}{
 \vspace*{-0.3em}
 \begin{itemize}
