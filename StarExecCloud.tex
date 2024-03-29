@@ -69,11 +69,13 @@ It was recently announced that StarExec Iowa will be decommissioned, and while S
 will continue to operate while funding is available, it will not be able to support the large 
 number of logic solver communities supported by the larger StarExec Iowa. 
 In the long term StarExec will necessarily have to migrate to a commonly available compute 
-service. \dav{Modify as to convey the general idea: re-engineering StarExec as a cloud-native application ... using containers technology (podman, k8s, etc. ) and infrastructure as code (IaC) practices ... see comments in introduction} 
-This paper describes work being done to build StarExec and ATP systems images, so that they can 
-be run in containers on a broad range of computer platforms. 
-Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can 
-be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
+service. 
+This paper describes work being done to reengineer StarExec as a cloud-native application using
+container technology and infrastructure-as-code practices.
+The first step has been to containerize StarExec and ATP systems so that they can be run on a 
+broad range of computer platforms. 
+The next step in process is to write a new backend in StarExec so that Kubernetes can be used to 
+orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
 One possibility is to host StarExec-Kubernetes in AWS.
 \end{abstract}
 %--------------------------------------------------------------------------------------------------
@@ -155,10 +157,14 @@ funded on a shoe-string budget by the TPTP World.
 While StarExec Miami will continue to operate while funding is available, it will not be able
 to support the large number of logic solver communities supported by the larger StarExec Iowa.
 In the long term StarExec will necessarily have to migrate to a commonly available compute service.
-\dav{Modify as to convey the general idea: stepwise migration/redesign of StarExec as a cloud-native application so that users can deploy their own (possibly customized) StarExec to their own cloud environments or on-premises servers, by drawing upon open-source standards (podman, kubernetes, etc.) and infrastructure as code (IaC) practices.} 
-This paper describes work being done to build StarExec and ATP systems images, so that they 
-can be run in containers on a broad range of computer platforms.
-\dav{I would rewrite the previous as just: "containerizing StarExec and ATP systems" possibly adding a footnote that explains the notion of "containerization")}
+This paper describes work being done to reengineer StarExec as a cloud-native application using
+container technology and infrastructure-as-code practices.
+The first step has been to containerize\footnote{%
+Strictly, ``images'' are built, and the images are deployed in containers. 
+But keeping with common use of the terminology, we just say ``container'' and ``containerize''.} 
+StarExec and ATP systems so that they can be run on a broad range of computer platforms.
+The next step in process is to write a new backend in StarExec so that Kubernetes can be used to
+orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
 Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can
 be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
 One possibility is to host StarExec-Kubernetes in AWS.
@@ -208,8 +214,8 @@ There have been some proposals for standardising the ATP system build process, e
 \href{https://tptp.org/Proposals/SystemBuild.html}{\tt tptp.org/Proposals/SystemBuild.html}, 
 but the diversity of ATP system software makes conformity nigh impossible.
 An alternative is to push the task back on the system developers, and one approach to this is
-packaging the systems into images, as discussed in Section~\ref{Containerization}.
-\dav{saying "images" is not widely understood. People usually just say "containers" in these cases (even if that's not 100\% 'theoretically correct'). A safe bet is to just say "containers" everywhere in case of doubt, that's what people in the business do ;)}
+containerizing the ATP systems, as discussed in Section~\ref{Containerization}.
+
 %--------------------------------------------------------------------------------------------------
 \subsection{StarExec}
 \label{StarExec}
@@ -326,8 +332,9 @@ compute nodes.
 
 \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
 
-All the files for building the StarExec image is available from~\ldots \\
+All the files for containerizing StarExec are available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-containerized}{\tt github.com/StarExecMiami/starexec-containerized}\\
+
 %--------------------------------------------------------------------------------------------------
 \section{Containerizing ATP Systems}
 \label{ContainerizingATPSystems}
@@ -335,55 +342,52 @@ All the files for building the StarExec image is available from~\ldots \\
 \dav{Again, we shall justify why we are doing this. In a sense, containerizing ATPs is independent from containerizing StarExec (or making it 'cloud-native'). Of course, both efforts play well together...
 It would be great for us if ATP developers become super enthusiastic about containerizing their babies after reading this section ;)}
 
-The ATP systems' images are built in a hierarchy, show in Figure~\ref{ImageDAG}.
+The ATP systems' are containerized in a hierarchy, show in Figure~\ref{ImageDAG}.
 The underlying operating system is {\tt ubuntu:latest} from {\tt dockerhub}~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/_/ubuntu}{\tt hub.docker.com/\_/ubuntu} \\
-The first image built for this work is {\tt ubuntu-build}, which adds to {\tt ubuntu:latest} 
-using {\tt apt-get} to add common software such as {\tt cmake}, {\tt git}, {\tt tcsh}, 
-{\tt python3}, and {\tt wget}.
+{\tt ubuntu-build} adds to {\tt ubuntu:latest} using {\tt apt-get} to install common software such 
+as {\tt cmake}, {\tt git}, {\tt tcsh}, {\tt python3}, and {\tt wget}.
 {\tt ubuntu-build} also creates an {\tt artifacts} directory where the components required for 
 an ATP system execution are placed.
 
-The {\tt tptp-world-build} image provides utilities from the TPTP World \cite{Sut24} that 
-are used by ATP systems, e.g., {\tt SPCForProblem} detects the Specialist Problem Class (SPC) 
-\cite{SS01} of a problem that is used by some ATP systems to decide on what search parameters 
-to use.
+{\tt tptp-world-build} provides utilities from the TPTP World \cite{Sut24} that are used by 
+ATP systems, e.g., {\tt SPCForProblem} detects the Specialist Problem Class (SPC) \cite{SS01} of 
+a problem that is used by some ATP systems to decide on what search parameters to use.
 Additionally, the {\tt runsolver} utility for limiting and reporting the resources
-used by an ATP system is part of this image.
+used by an ATP system is added.
 To support these utilities some libraries that are not part of the {\tt ubuntu-build} have
-to be added before downloading and building the image.
+to be added.
 The {\tt /benchmark} directory, where the TPTP problem for the ATP system to solve is placed, is
-created as part of this image.
+created as part of this container.
 
-On top of the {\tt ubuntu-build} image are the individual ATP system's
-{\em ATP-system-name}{\tt-build} images, and on top of that with the {\tt tptp-world-build} image 
-are the final the {\em ATP-system-name}{\tt -runsolver} images.
-The details of building the {\em ATP-system-name}{\tt -*} images are provided below.
+On top of {\tt ubuntu-build} are the individual ATP system's {\em ATP-system-name}{\tt-build}
+containers, and on top of that and {\tt tptp-world-build} are the final 
+{\em ATP-system-name}{\tt -runsolver} containers.
+The details of building the {\em ATP-system-name}{\tt -*} containers are provided below.
 
-The {\em ATP-system-name}{\tt -runsolver} images are pushed to {\tt dockerhub} in~\ldots\\
+The {\em ATP-system-name}{\tt -runsolver} containers are pushed to {\tt dockerhub} in~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
 which has a directory for each ATP system.
-The pushed images are tagged as 
+The pushed containers are tagged as 
 {\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver-}{\em architecture},
 where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
-All the files for building the ATP system images is available from~\ldots \\
+All the files for containerizing the ATP system are available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-kubernetes/tree/main/images}{\tt github.com/StarExecMiami/starexec-kubernetes/tree/main/images}\\
-A {\tt Makefile} to build images for E, Leo-III, and Vampire is included. \dav{Image file below not found}
+A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 
 \begin{figure}[htb]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{ImageDAG} 
-\caption{ATP System Image Hierarchy}
+\caption{ATP System Container Hierarchy}
 \label{ImageDAG}
 \end{center}
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
-\subsection{Building ATP System Images}
+\subsection{Containerizing ATP Systems}
 \label{BuildingATPSystemImages}
 
-An {\em ATP-system-name}{\tt-build} image adds the ATP system's executables to the
-{\tt ubuntu-build} image.
+Each {\em ATP-system-name}{\tt-build} adds the ATP system's executables to {\tt ubuntu-build}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
@@ -391,10 +395,10 @@ The choice of which version of the ATP system to containerize is made inside the
 e.g., in Figure~\ref{E---build} {\tt E 3.0.03} is chosen.
 This localization is necessary because the incantations for selecting and retrieving an
 particular ATP system version vary from system to system.
-By convention the image is named {\em ATP-system-name}{\tt -build}, and by default has
+By convention the container is named {\em ATP-system-name}{\tt -build}, and by default has
 the {\tt :latest} tag,
-Figure~\ref{E---build} shows the {\tt Dockerfile} for building E's {\tt -build} image, using 
-the command {\tt podman build -t eprover-build .}.
+Figure~\ref{E---build} shows the {\tt Dockerfile} for E's {\tt -build}, using the command 
+{\tt podman~build~-t~eprover-build~.}.
 
 \begin{figure}[htb]
 {\small
@@ -422,26 +426,25 @@ RUN cp PROVER/eprover-ho /artifacts/eprover-ho
 #------------------------------------------------------------
 \end{verbatim}
 }
-\caption{The {\tt Dockerfile} for E's {\tt -build} image}
+\caption{The {\tt Dockerfile} for E's {\tt -build}}
 \label{E---build}
 \end{figure}
 
-An {\em ATP-system-name}{\tt -runsolver} image adds {\tt runsolver} control to the 
-{\em ATP-system-name}{\tt-build} image, so that when executed the resource usage of the
-ATP system can be limited and reported.
-The image is based on the {\em ATP-system-name}{\tt-build} and {\tt tptp-world-build}
-images.
-Note how the image is built with the default {\tt :latest} tagged 
+Each {\em ATP-system-name}{\tt -runsolver} is based on {\em ATP-system-name}{\tt-build} and 
+{\tt tptp-world-build}.
+{\em ATP-system-name}{\tt -runsolver} adds the {\tt runsolver} utility to limit and report
+the resource usage of the ATP system.
+Note how the containerization uses the default {\tt :latest} tagged 
 {\em ATP-system-name}{\tt-build}. 
-The executables from the {\em ATP-system-name}{\tt -runsolver} image are copied from its 
-{\tt /artifacts} directory into this image's {\tt /artifacts} directory.
+The executables from {\em ATP-system-name}{\tt -runsolver} are copied from its 
+{\tt /artifacts} directory into this container's {\tt /artifacts} directory.
 Additionally, the {\tt run\_system} script, described in Section~\ref{Running}, is copied into
 {\tt /artifacts}.
-By convention this image is named
+By convention this container is named
 {\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver}, i.e., including the version
 number so that users know what version of the ATP system has been containerized.
-Figure~\ref{E---runsolver} shows the {\tt Dockerfile} for building E's {\tt -runsolver}
-image, using the command {\tt podman~build~-t~eprover:3.0.03-runsolver~.}, i.e., it contains
+Figure~\ref{E---runsolver} shows the {\tt Dockerfile} for building E's {\tt -runsolver},
+using the command {\tt podman~build~-t~eprover:3.0.03-runsolver~.}, i.e., it contains
 E version {\tt 3.0.03}.
 
 \begin{figure}[htb]
@@ -468,7 +471,7 @@ ENTRYPOINT ["runsolver"]
 #------------------------------------------------------------
 \end{verbatim}
 }
-\caption{The {\tt Dockerfile} for E's {\tt -runsolver} image}
+\caption{The {\tt Dockerfile} for E's {\tt -runsolver}}
 \label{E---runsolver}
 \end{figure}
 
@@ -476,11 +479,12 @@ ENTRYPOINT ["runsolver"]
 \subsection{Running ATP System Containers}
 \label{Running}
 
-A Python script {\tt run\_image.py} is available to run an ATP system image from the command line.
+A Python script {\tt run\_image.py} is available to run a containerized ATP system from the 
+command line.
 The script is shown in Appendix~\ref{runsystem}.
-Minimally the script must have the {\em ATP-system-name}{\tt -runsolver} image name as a command 
+Minimally the script must have the {\em ATP-system-name}{\tt -runsolver} as a command 
 line argument.
-By default {\tt run\_image.py} runs the {\em ATP-system-name}{\tt -runsolver} image in a
+By default {\tt run\_image.py} runs the {\em ATP-system-name}{\tt -runsolver} in a
 {\tt podman} container, taking the problem from {\tt stdin}, imposing CPU and wall clock time 
 limits of 60s, imposing no memory limit, with the intention that the ATP system should try prove 
 that the problem's conjecture is a theorem.
@@ -488,20 +492,18 @@ The problem file is passed into the running container using Podman volume mounti
 problem to the {\tt /artifacts/CWD/benchmark} file inside the container.
 All the parameters can be changed via command line options to {\tt run\_image.py}.
 
-The entrypoint in the {\em ATP-system-name}{\tt -runsolver} image is the {\tt runsolver} utility, 
+The entrypoint in {\em ATP-system-name}{\tt -runsolver} is the {\tt runsolver} utility, 
 which in turn starts the {\tt run\_system} script with the problem, CPU limit, wall clock limit, 
 memory limit, and the proof request as arguments.
-Each {\em ATP-system-name}{\tt -runsolver} image's {\tt run\_system} script is responsible for 
-starting the ATP system -- this action varies tremendously between ATP systems, and is thus 
-usually provided by the system developer.
+Each {\tt run\_system} script is responsible for starting theat ATP system -- this action varies 
+tremendously between ATP systems, and is thus usually provided by the system developer.
 For example, E has its own script {\tt run\_E} that invokes the {\tt eprover} or {\tt eprover-ho}
 binary depending on whether the problem is first-order or higher-order, and depending on the
 intention passed in appropriate command line arguments are given to the selected binary along
 with the problem file and time limit.
 
 %--------------------------------------------------------------------------------------------------
-% Geoff and David
-\section{Towards a cloud-native StarExec}
+\section{Towards a Cloud-native StarExec}
 \label{StarExecK}
 
 \dav{Changed the title. I will work on this section soon. The idea is to sell the part on re-engineering StarExec to support two backends: podman and k8s. There will be a final section on an exemplary 'reference' deployment on AWS using their managed k8s infrastructure (EKS, etc.)}
@@ -555,8 +557,8 @@ Figure~\ref{ArchitectureAWS} shows the AWS-specific architecture.
 \section{Conclusion}
 \label{Conclusion}
 
-This paper has described work being done to build StarExec and ATP systems images, so that they 
-can be run in containers on a broad range of computer platforms.
+This paper has described work being done to containerize StarExec and ATP systems so that they 
+can be run on a broad range of computer platforms.
 Additionally, this work explains plans to build a Kubernetes backend in StarExec so that 
 Kubernetes can be used to orchestrate distribute of StarExec job pairs over whatever compute 
 nodes are available.
