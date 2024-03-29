@@ -308,11 +308,21 @@ scaling, and management of containerized applications in production environments
 \section{Containerizing StarExec}
 \label{ContainerizingStarExec}
 
-A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
-This allows StarExec users to build and test StarExec installation packages on their own 
-computers before deploying to the StarExec Miami installation.
+%A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
+%This allows StarExec users to build and test StarExec installation packages on their own computers before deploying to the StarExec Miami installation.
 
-\dav{On justifying this effort: Containerizing StarExec feels natural as a first step towards making it 'cloud-native'.}
+\dav{On justifying this effort: Containerizing StarExec components feels natural as a first step towards making it 'cloud-native'... and so on}
+	
+\dav{The stuff below was moved from Section \ref{StarExecK}. I think it belongs here. In this section we can comment on what we have done so far (putting current StarExec as a whole in a single container). However, a professional solution will have to split components in different (communicating) containers (two obvious candidates being the database and the batch scheduler SGE). In k8s, the StarExec components/containers would run together as a single pod. In podman we can also group containers in a similar way (analogous to docker compose).}
+
+StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
+in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
+system and a problem. 
+MariaDB is used to store job information and results, and NFS is used to share disk space between 
+the head node and compute nodes. 
+StarExec currently offers two backends for running job pairs: the local backend runs pairs on 
+the same computer as the head node, and the Sun Grid Engine (SGE) backend sends pairs out to 
+compute nodes. 
 
 \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
 
@@ -496,14 +506,8 @@ with the problem file and time limit.
 
 \dav{Changed the title. I will work on this section soon. The idea is to sell the part on re-engineering StarExec to support two backends: podman and k8s. There will be a final section on an exemplary 'reference' deployment on AWS using their managed k8s infrastructure (EKS, etc.)}
 
-StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
-in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
-system and a problem. 
-MariaDB is used to store job information and results, and NFS is used to share disk space between 
-the head node and compute nodes. 
-StarExec currently offers two backends for running job pairs: the local backend runs pairs on 
-the same computer as the head node, and the Sun Grid Engine (SGE) backend sends pairs out to 
-compute nodes. 
+\dav{recall StarExec current architecture}
+
 This structure is inflexible, and must be configured to the specific hardware available. 
 The plan is to use a containerized StarExec (see Section~\ref{ContainerizingStarExec}), replace 
 SGE with Kubernetes, remove any MariaDB-specific bindings so that other database products can be 
