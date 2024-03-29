@@ -1,0 +1,12 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Background}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{ATP Systems}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{StarExec}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Containerization}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Containerizing StarExec}{}% 6
+\BOOKMARK [1][-]{section.4}{Containerizing ATP Systems}{}% 7
+\BOOKMARK [2][-]{subsection.4.1}{Building ATP System Images}{section.4}% 8
+\BOOKMARK [2][-]{subsection.4.2}{Running ATP System Containers}{section.4}% 9
+\BOOKMARK [1][-]{section.5}{StarExec with Kubernetes}{}% 10
+\BOOKMARK [1][-]{section.6}{Conclusion}{}% 11
+\BOOKMARK [1][-]{appendix.A}{run\137image.py}{}% 12
