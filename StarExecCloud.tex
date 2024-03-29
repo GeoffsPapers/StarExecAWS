@@ -209,7 +209,7 @@ There have been some proposals for standardising the ATP system build process, e
 but the diversity of ATP system software makes conformity nigh impossible.
 An alternative is to push the task back on the system developers, and one approach to this is
 packaging the systems into images, as discussed in Section~\ref{Containerization}.
-
+\dav{saying "images" is not widely understood. People usually just say "containers" in these cases (even if that's not 100\% 'theoretically correct'). A safe bet is to just say "containers" everywhere in case of doubt, that's what people in the business do ;)}
 %--------------------------------------------------------------------------------------------------
 \subsection{StarExec}
 \label{StarExec}
@@ -234,6 +234,7 @@ The hardware consists of a single head node and multiple compute nodes.
 The head node provides the browser interface for users, in particular it accepts job requests
 that generate job pairs consisting of an ATP system and a problem file, and distributes the
 pairs to the compute nodes using the SUN Grid Engine (SGE).
+\dav{Maybe we can explain which roles is SGE taking here (batch/job scheduling, cluster management, etc). I have seen also OAR as backend... }
 (For development and testing, the head node can also run job pairs itself using a local backend.)
 The head node maintains a relational MariaDB database, and all the nodes access an NFS mounted
 shared file system.
@@ -271,6 +272,7 @@ One effort is that described in the paper.
 \label{Containerization}
 
 {\em This section was written with the help of ChatGPT~3.5.}
+\dav{I will rewrite this section}
 
 Containerization is a technology that allows developers to package an application and its 
 dependencies into a standardized unit called a container. 
@@ -309,6 +311,8 @@ scaling, and management of containerized applications in production environments
 A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
 This allows StarExec users to build and test StarExec installation packages on their own 
 computers before deploying to the StarExec Miami installation.
+
+\dav{Containerizing StarExec feels natural as a first step towards making it 'cloud-native'. The idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) will be made available to a development community (e.g. as a public Git repository), so people can build, test (and run) their own StarExec(s). This also enables people to become contributors of the "main" StarExec (Miami) repo (e.g. by sending pull requests).}
 
 All the files for building the StarExec image is available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-containerized}{\tt github.com/StarExecMiami/starexec-containerized}\\
