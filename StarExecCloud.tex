@@ -528,6 +528,7 @@ The synthesis of these practices allows for the entire stack, from infrastructur
 We thus advocate for an open distribution model that ensures that StarExec's infrastructure (``as code'') is readily accessible for modification and distribution (e.g., by cloning or forking from our GitHub repository\footnote{The repository \url{https://github.com/StarExecMiami/starexec-kubernetes} hosts current work in progress. Alpha and beta releases will also be announced there in the coming months.}). This approach significantly simplifies the process of utilizing state-of-the-art ATP technology, making it much more easily usable by anyone, anywhere.
 
 \subsection{Re-engineering StarExec for the Cloud}
+\label{FutureStarExec}
 
 Recalling the current architecture of StarExec as discussed in section \ref{ContainerizingStarExec}, we have identified several areas for improvement to better serve our needs. Our ongoing efforts include:
 
@@ -545,7 +546,8 @@ Recalling the current architecture of StarExec as discussed in section \ref{Cont
 	
 	\item \textbf{Monitoring:} A vast array of observability tools (encompassing logging, metrics, tracing, etc.) support seamless integration with Kubernetes. Additionally, with its self-healing features, Kubernetes can automatically restart failed containers, replace and reschedule containers when nodes die, and kill non-responsive containers.
 	
-	\item \textbf{Efficiency:} Similar to SGE and other cluster management software such as Slurm and Torque, Kubernetes optimizes the use of underlying hardware by efficiently scheduling jobs and managing resources.
+	\item \textbf{Efficiency:} Similar to SGE and other cluster management software such as Slurm and Torque, Kubernetes optimizes the use of underlying hardware by efficiently scheduling jobs and managing resources.\footnote{
+		Certainly, Kubernetes does not outperform traditional High-Performance Computing (HPC) software within their specialized application domains. In fact, Kubernetes' extensible architecture facilitates interfacing with HPC systems through custom schedulers (see \url{https://kubernetes.io/docs/concepts/extend-kubernetes/}). In this setup, Kubernetes oversees container orchestration, while delegating the scheduling of intensive computing tasks to specialized HPC software.}
 	
 	\item \textbf{Flexibility:} Kubernetes' extensible architecture allows for custom schedulers and automated scaling decisions, enabling it to support a wide range of workloads, including stateless, stateful, and batch processing.
 	
@@ -553,47 +555,47 @@ Recalling the current architecture of StarExec as discussed in section \ref{Cont
 \end{enumerate}
 
 
-Figure~\ref{ArchitectureK} shows the generic architecture of a future re-engineered StarExec system:
+Figure~\ref{ArchitectureK} shows a generic architecture of the future re-engineered StarExec system:\dav{@Geoff: Can you replace "Kubernetes host" by "Kubernetes Control Plane"?}
 
 \begin{figure}[htb]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{ArchitectureK}
-\caption{Architecture in Kubernetes}
+\caption{Projected StarExec generic architecture}
 \label{ArchitectureK}
 \end{center}
 \end{figure}
 
-\subsection{Initial Deployment in AWS}
-
-\dav{TODO}
+\subsection{StarExec in AWS}
 
 An Amazon Research Award\footnote{%
 Amazon Research Award, Fall 2023. Any opinions, findings, and conclusions or recommendations 
 expressed in this material are those of the authors, and do not reflect the views of Amazon.} 
-has been granted to implement StarExec with Kubernetes in AWS.
-This instantiates the the generic implementation as follows:
+has been granted to deploy StarExec in AWS.
+This will not only help fund the development efforts discussed in section \ref{FutureStarExec}, but will also fund a first fully-functional reference deployment of StarExec on the AWS cloud. To lower our development costs we plan to instantiate the generic architecture in Figure \ref{ArchitectureK} using concrete AWS-managed services as shown in Figure~\ref{ArchitectureAWS}.
+
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{ArchitectureAWS}
+		\caption{Architecture in EKS on AWS}
+		\label{ArchitectureAWS}
+	\end{center}
+\end{figure}
 \begin{packed_itemize}
-\item The Kubernetes host will be Amazon Elastic Kubernetes Service (EKS)
-\item The head and compute nodes will be Amazon EC2 nodes.
+	
+\item The Kubernetes control plane will be managed by AWS Elastic Kubernetes Service (EKS).
+\item The StarExec head and compute nodes will run on optimized\footnote{\dav{@Geoff: do you want to say anything about their memory, cpu, etc. I saw cool stuff about this in the proposal}} Amazon EC2 instances.
 \item The database will be Amazon Relational Database (RDS).
 \item The file system will be Amazon Elastic File System (EFS).
 \item The ATP systems' containerization will be made compatible with (possibly be exactly) the 
-      Amazon Trusted Solver (ATS) format.
+      Amazon Trusted Solver (ATS) format\footnote{As was recently used in the SMT and SAT competitions (see \url{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}}) \dav{@Geoff: do you have any refs for this "ATS format"? (it has an acronym so I assumed it must be good documented on the web (apparently is not))}.
 \end{packed_itemize}
 
-The entire migration of StarExec into AWS will be done using the ``infrastructure-as-code'' 
-paradigm, using Amazon CloudFormation. 
-The implementation will be tested by copying the TPTP community from StarExec Miami onto the 
-new StarExec AWS.
-Figure~\ref{ArchitectureAWS} shows the AWS-specific architecture.
+Admittedly, leveraging AWS-managed services introduces a degree of cloud vendor lock-in, a situation we pragmatically accept to expedite the delivery of StarExec's initial cloud-native version to the community. This approach will particularly benefit teams planning to deploy StarExec on their own AWS accounts or through AWS grants.
 
-\begin{figure}[htb]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{ArchitectureAWS}
-\caption{Architecture in EKS on AWS}
-\label{ArchitectureAWS}
-\end{center}
-\end{figure}
+However, we maintain a strong commitment to open source and vendor neutrality, for example, by favoring CNCF-endorsed projects and adhering strictly to the infrastructure-as-code paradigm for StarExec's deployment into AWS. This commitment is designed to ease the process for other teams, enabling them to effectively bridge the `last mile' when deploying StarExec to non-managed AWS infrastructure or alternative cloud providers, including private clouds and on-premise clusters.
+
+The initial release will be rigorously tested through the migration of the TPTP community from StarExec Miami to the new StarExec AWS platform. We are particularly enthusiastic about collaborating with teams interested in deploying StarExec on their on-premise infrastructure or within university HPC clusters.
+
 
 %--------------------------------------------------------------------------------------------------
 % Geoff
