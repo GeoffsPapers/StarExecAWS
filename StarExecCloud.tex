@@ -517,16 +517,42 @@ with the problem file and time limit. \jack{Maybe it should be emphasized that r
 \section{Towards a Cloud-native StarExec}
 \label{StarExecK}
 
-\dav{Changed the title. I will work on this section soon. The idea is to sell the part on re-engineering StarExec to support two backends: podman and k8s. There will be a final section on an exemplary 'reference' deployment on AWS using their managed k8s infrastructure (EKS, etc.)}
-\dav{We shall also note that podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
+The term "cloud-native" has increasingly become synonymous with an approach to designing and operating applications that fully leverage the benefits of the cloud computing model.\footnote{For more information, one can refer to the initiatives led by the Cloud Native Computing Foundation (CNCF \url{https://www.cncf.io/}), which advocates for the adoption of this paradigm by fostering and sustaining an ecosystem of open source, vendor-neutral projects.}
 
-\dav{recall StarExec current architecture}
+Cloud-native applications are distinguished by their ability to scale more effectively, utilizing the cloud's capability to dynamically allocate resources. This development paradigm is closely aligned with DevOps practices, which emphasize collaboration between development and operations teams to automate the process of software delivery and infrastructure changes. It inherently supports infrastructure-as-code (IaC), a key DevOps practice, enabling the management and provisioning of infrastructure through code, which is both version-controlled and declarative.
 
-This structure is inflexible, and must be configured to the specific hardware available. 
-The plan is to use a containerized StarExec (see Section~\ref{ContainerizingStarExec}), replace 
-SGE with Kubernetes, remove any MariaDB-specific bindings so that other database products can be 
-used, and use containerized ATP systems (see Section~\ref{ContainerizingATPSystems}).
-Figure~\ref{ArchitectureK} shows the generic architecture.
+Containers, as discussed in section \ref{Containerization}, play a pivotal role in cloud-native development. Also, so-called ``Dockerfiles,'' which specify the steps to create a container image, embody the declarative nature of IaC by detailing the desired state of a containerized application (and letting automated processes take care of synchronization). Similarly, Kubernetes YAML manifests, which define how applications run on Kubernetes, align with the IaC paradigm by allowing the entire deployment's specifications to be declared and managed as code.
+
+The synthesis of these practices allows for the entire stack, from infrastructure to application, to be versioned, and automatically deployed as required. ATP users and developers can thus deploy StarExec (including its requisite infrastructure) in their preferred cloud environment or even in on-premises servers. This model offers unparalleled flexibility, scalability, and portability, free from the constraints of single vendors or platforms.
+We thus advocate for an open distribution model that ensures that StarExec's infrastructure (``as code'') is readily accessible for modification and distribution (e.g., by cloning or forking from our GitHub repository). This approach significantly simplifies the process of utilizing state-of-the-art ATP technology, making it much more easily usable by anyone, anywhere.
+
+\subsection{Re-engineering StarExec for the Cloud}
+
+Recalling the current architecture of StarExec as discussed in section \ref{ContainerizingStarExec}, we have identified several areas for improvement to better serve our needs. Our ongoing efforts include:
+
+\begin{enumerate}
+
+\item \textbf{Utilization of containerized ATP systems} (see Section~\ref{ContainerizingATPSystems}), which will be hosted in a container registry (such as Docker Hub \url{https://hub.docker.com/}) instead of the current approach \dav{@Geoff/Jack: briefly describe how StarExec gets its provers right now}.
+
+\item \textbf{Adding an abstraction layer for database communication} with the relational database (MariaDB) currently used to persist job information.  This layer will allow the database component to operate in its own container, significantly reducing coupling. Furthermore, by eliminating MariaDB-specific bindings, we enable compatibility with other database systems. This flexibility allows for seamless integration with existing SQL databases within the user's infrastructure, enhancing portability and adaptability.
+
+\item \textbf{Transition to Kubernetes for cluster management}, thereby completely replacing the current cluster management system (SGE) with Kubernetes. This change offers numerous benefits: 
+
+\begin{itemize}
+	
+	\item \textbf{Scalability:} Kubernetes excels at managing and scaling containerized applications, adapting to fluctuating workloads with ease. It also seamlessly integrates with most hardware provisioning tools, supporting many different public cloud platforms and on-premise frameworks.
+	
+	\item \textbf{Monitoring:} A vast array of observability tools (encompassing logging, metrics, tracing, etc.) support seamless integration with Kubernetes. Additionally, with its self-healing features, Kubernetes can automatically restart failed containers, replace and reschedule containers when nodes die, and kill non-responsive containers.
+	
+	\item \textbf{Efficiency:} Similar to SGE and other cluster management software such as Slurm and Torque, Kubernetes optimizes the use of underlying hardware by efficiently scheduling jobs and managing resources.
+	
+	\item \textbf{Flexibility:} Kubernetes' extensible architecture allows for custom schedulers and automated scaling decisions, enabling it to support a wide range of workloads, including stateless, stateful, and batch processing.
+	
+\end{itemize}
+\end{enumerate}
+
+
+Figure~\ref{ArchitectureK} shows the generic architecture of a future re-engineered StarExec system:
 
 \begin{figure}[htb]
 \begin{center}
@@ -535,6 +561,10 @@ Figure~\ref{ArchitectureK} shows the generic architecture.
 \label{ArchitectureK}
 \end{center}
 \end{figure}
+
+\subsection{Initial Deployment in AWS}
+
+\dav{TODO}
 
 An Amazon Research Award\footnote{%
 Amazon Research Award, Fall 2023. Any opinions, findings, and conclusions or recommendations 
