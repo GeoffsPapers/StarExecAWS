@@ -353,8 +353,7 @@ of many pieces of software.
 The {\tt starexec-containerized} repository aims to make this process simple and repeatable, 
 eliminating the need to understand the complex environment requirements of StarExec. 
 While the containerization of StarExec with a local backend is somewhat valuable on its own,
-it is most importantly a first step towards the automatic deployment of a full StarExec cluster 
-in the cloud.
+it is most importantly a first step towards the deployment of a full StarExec cluster in the cloud.
 Section~\ref{StarExecK} explains how this full cluster deployment could be done.
 
 % \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
@@ -363,9 +362,9 @@ Section~\ref{StarExecK} explains how this full cluster deployment could be done.
 \section{Containerizing ATP Systems}
 \label{ContainerizingATPSystems}
 
-While the grand plan is to deploy containerized ATP systems in a containerized StarExec, and 
-in a Kubernetes hosted version of StarExec, containerizing ATP systems is independently useful 
-because it allows ATP systems to be easily deployed in users' applications.
+While the grand plan is to deploy ATP systems in a containerized StarExec, and in a Kubernetes 
+hosted version of StarExec, containerizing ATP systems is independently useful because it allows 
+ATP systems to be easily deployed in users' applications.
 It would be great if ATP systems developers become super enthusiastic about containerizing their 
 systems after reading this section~\smiley.
 
@@ -384,8 +383,10 @@ To support these utilities some libraries that are not part of the {\tt ubuntu-b
 to be added.
 Additionally, the {\tt runsolver} utility for limiting and reporting the resources used by an 
 ATP system is added.
-The details of building the {\em ATP-system-name}{\tt -*} container images are provided in
-Section~\ref{BuildingATPSystemImages}.
+(See Section~\ref{RLR} for information about the forthcoming {\tt ResourceLimitRun} utility
+that will replace {\tt runsolver}.)
+The details of building the {\em ATP-system:version} and {\em ATP-system:version}{\tt -RLR}
+container images are provided in Section~\ref{BuildingATPSystemImages}.
 
 \begin{figure}[htb]
 \begin{center}
@@ -396,24 +397,44 @@ Section~\ref{BuildingATPSystemImages}.
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
-\subsection{Creating ATP System Containers}
+\subsection{Building ATP System Containers}
 \label{BuildingATPSystemImages}
 
-Each ATP system's {\em ATP-system-name}{\tt-build} container image is built on top of the
-{\tt ubuntu-build} container image, and with {\tt tptp-world-build} container image forms the 
-base for the final {\em ATP-system-name}{\tt -runsolver} container image.
-{\em ATP-system-name}{\tt-build} adds the ATP system's executables to {\tt ubuntu-build}.
+Each {\em ATP-system:version} container image is built on top of the {\tt ubuntu-build} container 
+image, and with the {\tt tptp-world-build} container image forms the base for the final 
+{\em ATP-system:version}{\tt -RLR} container image.
+The {\em ATP-system} is the container name, and the {\em version}/{\em version}{\tt -RLR} are 
+the container tags.
+Podman requires the container name to be lowercase, so, e.g., E's container is named {\tt eprover}.
+The ``{\tt RLR}'' refers to the ``Resource Limited Run'' program used to monitor and limit the 
+resources used by the ATP system, either {\tt runsolver} or {\tt ResourceLimitRun}.
+
+{\em ATP-system:version} adds the ATP system's executables to {\tt ubuntu-build}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
 The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile},
 e.g., in Figure~\ref{E---build} E version 3.0.03 is chosen.
-This localization is necessary because the incantations for selecting and retrieving an
-particular ATP system version vary from system to system.
-By convention the container image is named {\em ATP-system-name}{\tt -build}, and by default has
-the {\tt :latest} tag.
-Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt -build} container
-image, using the command ``{\tt podman~build~-t~eprover-build~.}''.
+This localization is necessary because the incantations for retrieving and building particular 
+ATP systems version vary from system to system and from version to version.
+
+A {\tt run\_system} script must be provided in the {\em ATP-system:version} container image, 
+which is used to run the ATP system using what ever incantations are necessary.
+The parameters for running the ATP system are provided in environment variables:
+{\tt RLR\_INPUT\_FILE} that provides the problem file name,
+{\tt RLR\_CPU\_LIMIT} that gives the CPU time limit in seconds (0 by default to indicate no limit),
+{\tt LR\_WC\_LIMIT} that gives the wall clock time limit in seconds (0 by default to indicate no 
+limit),
+{\tt RLR\_MEM\_LIMIT} that gives the memory limit in MiB (0 by default to indicate no limit),
+and
+{\tt RLR\_INTENT} to indicate the user's intent, currently {\tt THM} to indicate that the ATP
+system should try prove the conjecture (or equivalently for most systems, show that the problem 
+is unsatisfiable - this is the default) or {\tt SAT} to indicate that the ATP system should try 
+disprove the conjecture (or equivalently for most systems, show that the problem is satisfiable).
+
+Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
+container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
+Appendix~\ref{E_run_system} shows E's {\tt run\_system} script.
 
 \begin{figure}[htb]
 {\small
@@ -437,6 +458,10 @@ RUN ./configure --bindir=/artifacts && \
 RUN ./configure --enable-ho && \
     make rebuild
 RUN cp PROVER/eprover-ho /artifacts/eprover-ho
+
+# run_system script
+ADD run_system /artifacts/
+
 #------------------------------------------------------------
 \end{verbatim}
 }
@@ -444,54 +469,43 @@ RUN cp PROVER/eprover-ho /artifacts/eprover-ho
 \label{E---build}
 \end{figure}
 
-Each {\em ATP-system-name}{\tt -runsolver} container image is based on its
-{\em ATP-system-name}{\tt-build} container image and the {\tt tptp-world-build} container image.
-Note that the default {\tt :latest} tagged {\em ATP-system-name}{\tt-build} is used. 
-Each {\em ATP-system-name}{\tt -runsolver} primarily extends {\tt tptp-world-build}, and
-copies over only what is necessary from {\em ATP-system-name}{\tt-build}.
-If the ATP system requires a complicated environment (not just a simple static binary), the
-{\tt Dockerfile} might need to duplicate some of the work from {\em ATP-system-name}{\tt-build}. 
-% This is because of the "AS" in the "FROM" line in the dockerfile.}
-Additionally, the {\tt run\_system} script, described in Section~\ref{Running}, is copied into
-{\tt /artifacts}.
-The entrypoint to {\em ATP-system-name}{\tt -runsolver} is the {\tt runsolver} utility from
+Each {\em ATP-system:version}{\tt -RLR} container image is based on its
+{\em ATP-system:version} container image and the {\tt tptp-world-build} container image.
+{\em ATP-system:version}{\tt -RLR} primarily extends {\tt tptp-world-build}, and
+copies over only what is necessary from {\em ATP-system:version}.
+The entrypoint to {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility from
 {\tt tptp-world-build}.
-By convention the {\tt -runsolver} container image is named
-{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver}, i.e., including the version
-number so that users know what version of the ATP system has been containerized.
-Figure~\ref{E---runsolver} shows the {\tt Dockerfile} to create E's {\tt -runsolver} container
-image, using the command ``{\tt podman~build~-t~eprover:3.0.03-runsolver~.}'', i.e., it contains
-E version {\tt 3.0.03}.
+This simple arrangement allows a generic {\tt Dockerfile} to be used, parameterised by the
+underlying {\em ATP-system:version}.
+Figure~\ref{Dockerfile---RLR} shows the {\tt Dockerfile} to create E's {\tt eprover:3.0.03-RLR} 
+container image, using the command 
+``{\tt podman~build~-t~eprover:3.0.03-RLR~--build-arg PROVER\_IMAGE=eprover:3.0.03~.}''.
 
 \begin{figure}[htb]
 {\small
 \begin{verbatim}
 #------------------------------------------------------------
-FROM eprover-build AS builder
+ARG PROVER_IMAGE
+
+FROM ${PROVER_IMAGE} AS builder
 FROM tptp-world-build
 
 ENV PATH=".:${PATH}"
 WORKDIR /artifacts
 
-# E-specific stuff from ostensibly external image
-COPY --from=builder /artifacts/eprover /artifacts/
-COPY --from=builder /artifacts/eprover-ho /artifacts/
-
-# run_image script 
-ADD run_image /artifacts/
-
-# run_E script 
-ADD run_E /artifacts/
+# System specific stuff 
+COPY --from=builder /artifacts/* /artifacts/
 
 ENTRYPOINT ["runsolver"]
 #------------------------------------------------------------
 \end{verbatim}
 }
-\caption{The {\tt Dockerfile} for E's {\tt -runsolver}}
-\label{E---runsolver}
+\caption{The generic {\tt Dockerfile} for building {\tt -RLR} container images}
+\label{Dockerfile---RLR}
 \end{figure}
 
-The {\em ATP-system-name}{\tt -runsolver} container images are pushed to {\tt dockerhub} 
+ZZZZZZZZz
+The {\em ATP-system:version}{\tt -RLR} container images are pushed to {\tt dockerhub} 
 in~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
 which has a directory for each ATP system.
@@ -509,9 +523,9 @@ A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 A Python script {\tt run\_image.py} is available to simplify and standardize running containerized 
 ATP systems from the command line.
 The script is shown in Appendix~\ref{runsystem}.
-Minimally the script must have the {\em ATP-system-name}{\tt -runsolver} container image name as a 
+Minimally the script must have the {\em ATP-system:version}{\tt -RLR} container image name as a 
 command line argument.
-By default {\tt run\_image.py} runs the {\em ATP-system-name}{\tt -runsolver} in a
+By default {\tt run\_image.py} runs the {\em ATP-system:version}{\tt -RLR} in a
 Podman container, taking the problem from {\tt stdin}, imposing CPU and wall clock time 
 limits of 60s, imposing no memory limit, with the intention\footnote{%
 An intention is a tag such as {\tt THM} ot {\tt SAT}, indicating that the ATP system should
@@ -522,7 +536,7 @@ file to a local {\tt problemfile} file outside the container and mapping the fil
 {\tt /artifacts/CWD/problemfile} file inside the container.
 All the parameters of {\tt run\_image.py} can be changed via command line options.
 
-The entrypoint in {\em ATP-system-name}{\tt -runsolver} is the {\tt runsolver} utility, 
+The entrypoint in {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility, 
 which in turn starts the {\tt run\_system} script with the problem, CPU limit, wall clock limit, 
 memory limit, and the proof request as arguments.
 Each {\tt run\_system} script is responsible for starting the ATP system -- this action varies 
@@ -708,8 +722,54 @@ Hopefully the future will include StarExec being flexibly available in online co
 \appendix
 
 \newpage
+\section{E's {\tt run\_system} script}
+\label{E_run_system}
+{\small
+\begin{verbatim}
+#--------------------------------------------------------------------------------
+#!/bin/tcsh
+
+setenv HERE `dirname $0`
+setenv TEMPDIR `mktemp -d`
+setenv PROBLEMFILE $TEMPDIR/E---3.1_$$.p
+onintr cleanup
+
+#----Add extra ()s for THF and TXF
+$HERE/tptp4X -t uniquenames4 -x $RLR_INPUT_FILE > $PROBLEMFILE
+
+set SPCLine=`grep -E "^% SPC " $PROBLEMFILE`
+if ("$SPCLine" != "") then
+    set ProblemSPC = `expr "$SPCLine" : "^% SPC  *: *\([^ ]*\)"`
+else
+    set ProblemSPC = `$HERE/SPCForProblem $RLR_INPUT_FILE`
+endif
+set Mode = $RLR_INTENT
+
+set CommonParameters="--delete-bad-limit=2000000000 --definitional-cnf=24 \
+-s --print-statistics -R --print-version --proof-object --cpu-limit=$RLR_WC_LIMIT"
+if ("$Mode" == "THM") then
+    if (`expr "$ProblemSPC" : "TH0_.*"`) then
+        echo "Running higher-order theorem proving"
+        $HERE/eprover-ho $CommonParameters --auto-schedule=8 $PROBLEMFILE
+    else
+        echo "Running first-order theorem proving"
+        $HERE/eprover $CommonParameters --auto-schedule=8 $PROBLEMFILE
+    endif
+else 
+    echo "Running first-order model finding"
+    $HERE/eprover $CommonParameters --satauto-schedule=8 $PROBLEMFILE
+endif
+
+cleanup:
+    echo "% E exiting"
+    rm -rf $TEMPDIR
+#--------------------------------------------------------------------------------
+\end{verbatim}
+}
+
+\newpage
 \section{{\tt run\_image.py}}
-\label{runsystem}
+\label{run_image}
 {\small
 \begin{verbatim}
 #--------------------------------------------------------------------------------
@@ -720,22 +780,17 @@ import subprocess
 import os, sys
 import shutil
 
-
-def getRunsolverArgs(args):
+def getRLRArgs(args):
     mem_part = f" -M {args.memory_limit}" if args.memory_limit > 0 else ""
     return "--timestamp --watcher-data /dev/null -C " + \
 f"{args.cpu_limit} -W {args.wall_clock_limit}{mem_part}"
 
-
-def getRunscriptArgs(args, args_format):
-    parts = {
-        'P': "/artifacts/CWD/problemfile",
-        'C': args.cpu_limit,
-        'W': args.wall_clock_limit,
-        'I': args.intent,
-        'M': args.memory_limit,
-    }
-    return ' '.join([str(parts[c.upper()]) for c in args_format])
+def getEnvVars(args):
+    return " ".join([f"-e {k}='{v}'" for k, v in [
+        ("RLR_INPUT_FILE", "/artifacts/CWD/problemfile"),
+        ("RLR_CPU_LIMIT", args.cpu_limit), ("RLR_WC_LIMIT", args.wall_clock_limit),
+        ("RLR_MEM_LIMIT", args.memory_limit), ("RLR_INTENT", args.intent),
+    ]])
 
 def makeBenchmark(problem):
     if problem:
@@ -744,43 +799,28 @@ def makeBenchmark(problem):
         with open('./problemfile', 'w') as problemfile:
             problemfile.write(sys.stdin.read())
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Wrapper for a podman call to a prover image")
     parser.add_argument("image_name", 
-help="Image name, e.g., eprover:3.0.03-runsolver-arm64")
-    parser.add_argument("-P", "--problem", 
-help="Problem file if not stdin")
-    parser.add_argument("--runscript", default="run_system PCWMI", 
-help="System script and its args, e.g., 'run_E PWI', default=run_system PCWMI")
-    parser.add_argument("-C", "--cpu-limit", default=60, type=int, 
-help="CPU time limit in seconds, default=60")
-    parser.add_argument("-W", "--wall-clock-limit", default=60, type=int, 
-help="Wall clock time limit in seconds, default=60")
-    parser.add_argument("-M", "--memory-limit", default=-1, type=int, 
-help="Memory limit in MB, default=none")
+help="Image name, e.g., eprover:3.0.03-RLR-arm64")
+    parser.add_argument("-P", "--problem",help="Problem file if not stdin")
+    parser.add_argument("-C", "--cpu-limit", default=0, type=int, 
+help="CPU time limit in seconds, default=none")
+    parser.add_argument("-W", "--wall-clock-limit", default=0, type=int, 
+help="Wall clock time limit in seconds, default=none")
+    parser.add_argument("-M", "--memory-limit", default=0, type=int, 
+help="Memory limit in MiB, default=none")
     parser.add_argument("-I", "--intent", default="THM", choices=["THM", "SAT"], 
 help="Intention (THM, SAT, etc), default=THM")
-    parser.add_argument("--dry-run", action="store_true", 
-help="dry run")
     args = parser.parse_args()
+    if args.wall_clock_limit == 0 and args.cpu_limit != 0:
+        args.wall_clock_limit = args.cpu_limit
 
-    # Format arguments
-    runsolverArgs = getRunsolverArgs(args)
-    runscript, runscriptArgsFormat = args.runscript.split()
-    runscriptArgs = getRunscriptArgs(args, runscriptArgsFormat)
-
-    # Construct podman command
-    command = "podman run -v .:/artifacts/CWD -t " + \
-f"{args.image_name} {runsolverArgs} {runscript} {runscriptArgs}"
-
-    # Run command or print for dry run
-    if args.dry_run:
-        print(command)
-    else:
-        makeBenchmark(args.problem)
-        subprocess.run(command, shell=True)
-        os.remove("./problemfile")
+    command = f"podman run {getEnvVars(args)} -v .:/artifacts/CWD -t " + \
+f"{args.image_name} {getRLRArgs(args)} run_system"
+    makeBenchmark(args.problem)
+    subprocess.run(command, shell=True)
+    os.remove("./problemfile")
 #--------------------------------------------------------------------------------
 \end{verbatim}
 }
