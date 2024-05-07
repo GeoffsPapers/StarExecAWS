@@ -70,15 +70,14 @@
 StarExec has been central to much progress in logic solvers over the last 10 years.
 It was recently announced that StarExec Iowa will be decommissioned, and while StarExec Miami 
 will continue to operate while funding is available, it will not be able to support all the 
-logic solver communities using the larger StarExec Iowa. 
-In the long term StarExec will necessarily have to migrate to a commonly available compute 
-service. 
+logic solver communities currently using the larger StarExec Iowa. 
+In the long term StarExec will necessarily have to migrate to new compute environments.
 This paper describes work being done to reengineer StarExec as a cloud-native application using
 container technology and infrastructure-as-code practices.
 The first step has been to containerize StarExec and ATP systems so that they can be run on a 
 broad range of computer platforms. 
 The next step in process is to write a new backend in StarExec so that Kubernetes can be used to 
-orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
+orchestrate distribution of StarExec job pairs over whatever compute nodes are available.
 Supported by an Amazon Research Award, a new version of StarExec will be deployed in AWS.
 \end{abstract}
 %--------------------------------------------------------------------------------------------------
@@ -135,11 +134,11 @@ evaluation.
 The need to provide support for meaningful system evaluation has been recognized in many other 
 logic solver communities, e.g., TPTP~\cite{SS01}, SAT~\cite{HS00-SATLIB}, SMT~\cite{CSW15},
 Termination~\cite{MZ07}, etc.
-For many years testing of logic solvers was done on individual developer's computers. 
-In 2010 a proposal for centralised hardware and software support was developed,
-and in 2011 a \$2.11 million NSF grant\footnote{%
+For many years testing of logic solvers was done on individual developers' computers. 
+In 2010 a proposal for centralised hardware and software support was submitted to the NSF,
+and in 2011 a \$2.11 million grant\footnote{%
 NSF Awards 1058748 and 1058925, led by Aaron Stump and Cesare Tinelli at the University of Iowa} 
-was obtained.
+was awarded.
 This grant led to the development and availability of StarExec Iowa~\cite{SST14} in 2012,
 and a subsequent \$1.00 million grant\footnote{%
 NSF Award 1730419} in 2017 expanded StarExec to Miami.
@@ -158,9 +157,9 @@ The 2017 grant for StarExec Miami paid for the hardware and three years of syste
 The hardware is still hosted by the University of Miami High Performance Computing group,
 funded on a shoe-string budget by the TPTP World.
 While StarExec Miami will continue to operate while funding is available, it will not be able
-to support all logic solver communities using the larger StarExec Iowa.
-In the long term StarExec will necessarily have to migrate to new environments, and several plans 
-are (at the time of writing) being discussed
+to support all the logic solver communities currently using the larger StarExec Iowa.
+In the long term StarExec will necessarily have to migrate to new compute environments, and 
+several plans are (at the time of writing) being discussed.
 This paper describes work being done to reengineer StarExec as a cloud-native application using
 container technology and infrastructure-as-code practices.
 The first step has been to containerize\footnote{%
@@ -168,9 +167,7 @@ Strictly, ``images'' are built, and the images are deployed in containers.
 But keeping with common use of the terminology, we say ``container images'' and ``containerize''.} 
 StarExec and ATP systems so that they can be run on a broad range of computer platforms.
 The next step in process is to write a new backend in StarExec so that Kubernetes can be used to
-orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
-Additionally, this work aims to build a Kubernetes backend in StarExec so that Kubernetes can
-be used to orchestrate distribute of StarExec job pairs over whatever compute nodes are available.
+orchestrate distribution of StarExec job pairs over whatever compute nodes are available.
 Supported by an Amazon Research Award (see Section~\ref{StarExecK}) a new version of StarExec
 will be deployed in AWS.
 This StarExec instance will be fully functional and available to the community (as much as our 
@@ -187,46 +184,20 @@ Section~\ref{StarExecK} explains how the containerized StarExec and ATP systems 
 in a Kubernetes setting.
 Section~\ref{Conclusion} concludes and looks forward to future work.
 
+\vspace*{1em}
+\noindent
+All the software described in the paper is available from~\ldots \\
+\hspace*{1cm}\href{https://github.com/StarExecMiami/StarExec-ARC}{\tt github.com/StarExecMiami/StarExec-ARC}.
+
 %--------------------------------------------------------------------------------------------------
 \section{Background}
 \label{Background}
 
 %--------------------------------------------------------------------------------------------------
-\subsection{ATP Systems}
-\label{ATPSystems}
-
-ATP Systems are complex pieces of software, typically using advanced data structures~\cite{Sch13}, 
-sophisticated algorithms~\cite{Vor01}, and tricky code optimizations\cite{Sch06}.
-They are written in a variety of programming languages: Prolog~\cite{Ott23,Hol23}, 
-Scala~\cite{SB18}, C~\cite{SCV19}, C++~\cite{RV02-AICOMM}, OCaml~\cite{Kor06}, Python~\cite{SP20}, 
-etc.
-Their build processes include techniques such as parser generators~\cite{Ste21}, Makefiles,
-code repositories, specific versions of libraries, etc.
-For a user who is focussed on an application of ATP,
-% , e.g. (with a few exemplar references), in 
-% mathematics \cite{Qua92-Book,MP96}, logic~\cite{GO86,Jec95}, management~\cite{PB+92-TR,PM94}, 
-% planning \cite{SE94}, 
-installing an ATP system can be a deal breaker. 
-Many early users selected a weaker system, e.g., Otter~\cite{McC03-Otter}, for their experiments 
-because it was readily available and easy enough to install.
-% As the TPTP World evolved it was clear that more powerful ATP systems were available, especially
-% evident in the CADE ATP System Competition (CASC)~\cite{Sut16}.
-% However, these more powerful systems were often not as easy to obtain and install.
-% This was a key motivation for the creation of the SystemOnTPTP service~\cite{Sut00-CADE-17}.
-% SystemOnTPTP allows users to
-% The ATP systems in SystemOnTPTP are installed by the third author, often with help from the
-% individual system developers.
-There have been some proposals for standardising the ATP system build process, e.g.,
-\href{https://tptp.org/Proposals/SystemBuild.html}{\tt tptp.org/Proposals/SystemBuild.html}, 
-but the diversity of ATP system software makes conformity nigh impossible.
-An alternative is to push the task back on the system developers, and one approach to this is
-containerizing the ATP systems, as discussed in Section~\ref{Containerization}.
-
-%--------------------------------------------------------------------------------------------------
 \subsection{StarExec}
 \label{StarExec}
 
-Figure~\ref{ArchitectureS} shows the architecture of the currently deployed StarExec.
+Figure~\ref{ArchitectureS} shows the architecture of the currently deployed StarExec Miami.
 The hardware consists of a single head node and multiple compute nodes.
 The head node provides the browser interface for users, in particular it accepts job requests
 that generate job pairs consisting of an ATP system and a problem file, does internal scheduling,
@@ -256,6 +227,37 @@ jobs, etc.
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
+\subsection{ATP Systems}
+\label{ATPSystems}
+
+ATP Systems are complex pieces of software, typically using advanced data structures~\cite{Sch13}, 
+sophisticated algorithms~\cite{Vor01}, and tricky code optimizations~\cite{Sch06}.
+They are written in a variety of programming languages: Prolog~\cite{Ott23,Hol23}, 
+Scala~\cite{SB18}, C~\cite{SCV19}, C++~\cite{RV02-AICOMM}, OCaml~\cite{Kor06}, Python~\cite{SP20}, 
+etc.
+Their build processes include techniques such as parser generators~\cite{Ste21}, Makefiles,
+code repositories, specific versions of libraries, etc.
+For a user who is focussed on an application of ATP,
+% , e.g. (with a few exemplar references), in 
+% mathematics \cite{Qua92-Book,MP96}, logic~\cite{GO86,Jec95}, management~\cite{PB+92-TR,PM94}, 
+% planning \cite{SE94}, 
+installing an ATP system can be a deal breaker. 
+Many early users selected a weaker system, e.g., Otter~\cite{McC03-Otter}, for their experiments 
+because it was readily available and easy enough to install.
+% As the TPTP World evolved it was clear that more powerful ATP systems were available, especially
+% evident in the CADE ATP System Competition (CASC)~\cite{Sut16}.
+% However, these more powerful systems were often not as easy to obtain and install.
+% This was a key motivation for the creation of the SystemOnTPTP service~\cite{Sut00-CADE-17}.
+% SystemOnTPTP allows users to
+% The ATP systems in SystemOnTPTP are installed by the third author, often with help from the
+% individual system developers.
+There have been some proposals for standardising the ATP system build process, e.g.,
+\href{https://tptp.org/Proposals/SystemBuild.html}{\tt tptp.org/Proposals/SystemBuild.html}, 
+but the diversity of ATP system software makes conformity nigh impossible.
+An alternative is to push the task back on the system developers, and one approach to this is
+containerizing ATP systems, as discussed in Section~\ref{ContainerizingATPSystems}.
+
+%--------------------------------------------------------------------------------------------------
 \subsection{Containerization}
 \label{Containerization}
 
@@ -283,7 +285,7 @@ which enable sophisticated monitoring and resource management.
 The isolation provided by containers helps prevent conflicts between applications and enhances 
 security by limiting the impact of potential vulnerabilities.
 
-Popular containerization platforms such as Docker, Podman, LXD, and rkt have significantly 
+Popular containerization platforms, e.g., Docker, Podman, LXD, and rkt, have significantly 
 contributed to the widespread adoption of container technology within the modern IT landscape. 
 Notably, Kubernetes (often abbreviated as K8s) has emerged as the de-facto industry standard for 
 container orchestration: automating the deployment, scaling, and management of containerized 
@@ -299,7 +301,7 @@ As an ``operating system for the cloud'', Kubernetes offers several distribution
 levels of functionality (and complexity). 
 Nowadays, there exist several lightweight production-ready distributions, e.g., 
 k3s (\href{https://k3s.io/}{\tt k3s.io}), k0s (\href{https://k0sproject.io/}{\tt k0sproject.io}), 
-and microK8s (\href{https://microk8s.io/}{\tt microk8s.io}), which greatly simplify the deployment 
+and microK8s (\href{https://microk8s.io/}{\tt microk8s.io}), that greatly simplify the deployment 
 and management of Kubernetes environments, especially in development, testing, and small-scale 
 production scenarios. 
 These distributions provide an accessible entry point for organizations and individuals looking 
@@ -312,17 +314,16 @@ to this pivotal technology.
 
 StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
 in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
-system and a problem. 
+system and a problem file. 
 MariaDB is used to store job information and results, and NFS is used to share disk space between 
 the head node and compute nodes. 
-StarExec currently offers two backends for running job pairs: the local backend runs pairs on 
-the same computer as the head node, and the Sun Grid Engine (SGE) backend sends pairs out to 
+StarExec currently offers two backends for running job pairs: the local backend that runs pairs on 
+the same computer as the head node, and the Sun Grid Engine (SGE) backend that sends pairs out to 
 compute nodes.
 
-So far, the head node with a local backend has been successfully containerized.
-All the files for containerizing StarExec with a local backend are available from~\ldots \\
-\hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-containerized}{\tt github.com/StarExecMiami/starexec-containerized}\\
-The repository includes the following:
+So far, the head node with a local backend has been successfully containerized - see the
+{\tt starexec-containerized} directory of the GitHub repository.
+It includes~\ldots
 \begin{packed_itemize}
 \item A {\tt Dockerfile} for building a StarExec image with a local backend.
 \item A StarExec configuration file (database credentials, special StarExec directory paths, 
@@ -342,11 +343,11 @@ The repository includes the following:
 
 The deployment of StarExec Miami was a real challenge, requiring installation and configuration 
 of many pieces of software.
-The {\tt starexec-containerized} repository aims to make this process simple and repeatable, 
-eliminating the need to understand the complex environment requirements of StarExec. 
+The containerization approach aims to make this process simple and repeatable, eliminating the 
+need to understand the complex environment requirements of StarExec. 
 While the containerization of StarExec with a local backend is somewhat valuable on its own,
 it is most importantly a first step towards the deployment of a full StarExec cluster in the cloud.
-Section~\ref{StarExecK} explains how this full cluster deployment could be done.
+Section~\ref{StarExecK} explains how this will be done.
 
 % \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
 
@@ -368,7 +369,7 @@ The {\tt ubuntu-arc}\footnote{%
 container image adds to {\tt ubuntu:latest} using {\tt apt-get} to 
 install common software such as {\tt cmake}, {\tt git}, {\tt tcsh}, {\tt python3}, and {\tt wget}.
 {\tt ubuntu-arc} also creates an {\tt artifacts} directory where the components required for 
-an ATP system execution are placed.
+an ATP system's execution are placed.
 
 The {\tt tptp-world} container image provides utilities from the TPTP World that are used by 
 ATP systems, e.g., {\tt SPCForProblem} detects the Specialist Problem Class (SPC) \cite{SS01} of 
@@ -402,38 +403,41 @@ the container tags.
 Podman requires the container name to be lowercase, so, e.g., E's container is named {\tt eprover}.
 The ``{\tt RLR}'' refers to the ``Resource Limited Run'' program used to monitor and limit the 
 resources used by the ATP system, either {\tt runsolver} or {\tt ResourceLimitRun}.
+The files for containerizing some ATP systems are in the {\tt provers-containerized} directory 
+of the GitHub repository.
+A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 
 Each {\em ATP-system:version} container image adds the ATP system's executables to 
 {\tt ubuntu-arc}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
-The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile},
-e.g., in Figure~\ref{E---build} E 3.0.03 is chosen.
+The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile}.
 This localization is necessary because the incantations for retrieving and building particular 
 ATP system versions vary from system to system and from version to version.
-Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
-container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
-
 An {\em ATP-system:version} container image must include a {\tt run\_system} script that is used 
 to run the ATP system using what ever incantations are necessary.
 The parameters for running the ATP system are provided to the {\tt run\_system} script in 
 environment variables:
-{\tt RLR\_INPUT\_FILE} that provides the problem file name,
-{\tt RLR\_CPU\_LIMIT} that gives the CPU time limit in seconds (0 by default, to indicate no limit),
-{\tt LR\_WC\_LIMIT} that gives the wall clock time limit in seconds (0 by default, to indicate no 
+{\tt RLR\_INPUT\_FILE} provides the problem file name,
+{\tt RLR\_CPU\_LIMIT} provides the CPU time limit in seconds (0 by default, to indicate no limit),
+{\tt LR\_WC\_LIMIT} provides the wall clock time limit in seconds (0 by default, to indicate no 
 limit),
-{\tt RLR\_MEM\_LIMIT} that gives the memory limit in MiB (0 by default, to indicate no limit),
+{\tt RLR\_MEM\_LIMIT} provides the memory limit in MiB (0 by default, to indicate no limit),
 and
-{\tt RLR\_INTENT} that indicates the user's intent ({\tt THM} by default, to indicate that the ATP
-system should try prove the conjecture (or, equivalently for most systems, show that the problem 
-is unsatisfiable))\footnote{%
+{\tt RLR\_INTENT} indicates the user's intent\footnote{%
 An {\em intent} is a tag such as {\tt THM} ot {\tt SAT}, indicating that the ATP system should
-try to prove or disprove the conjecture, respectively.}.
+try to prove (or, equivalently for most systems, show that the problem is unsatisfiable) or 
+disprove (or, equivalently for most systems, show that the problem is satisfiable) the conjecture, 
+respectively.}
+({\tt THM} by default).
 Appendix~\ref{E_run_system} shows E's {\tt run\_system} script that invokes the {\tt eprover} 
 or {\tt eprover-ho} binary depending on whether the problem is first-order or higher-order, 
 and depending on the intent the appropriate command line arguments are given to the selected 
 binary along with the problem file and time limit. 
+Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
+container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
+
 
 \begin{figure}[htb]
 {\small
@@ -476,8 +480,15 @@ underlying {\em ATP-system:version}.
 The {\tt ENTRYPOINT} in {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility from
 {\tt tptp-world}, which is used to run the ATP system (see Section~\ref{Running}).
 Figure~\ref{Dockerfile---RLR} shows the {\tt Dockerfile} to create E's {\tt eprover:3.0.03-RLR} 
-container image, using the command  \\
-``{\tt podman~build~-t~eprover:3.0.03-RLR~--build-arg PROVER\_IMAGE=eprover:3.0.03~.}''.
+container image, using the command 
+``{\tt podman~build -t~eprover:3.0.03 RLR~--build-arg PROVER\_IMAGE=eprover:3.0.03~.}''. \\
+The {\em ATP-system:version}{\tt -RLR} container images are pushed to {\tt dockerhub} in~\ldots\\
+\hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
+which has a directory for each ATP system.
+The pushed container images are tagged as 
+{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -RLR-}{\em architecture},
+where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
+
 
 \begin{figure}[htb]
 {\small
@@ -502,56 +513,53 @@ ENTRYPOINT ["runsolver"]
 \label{Dockerfile---RLR}
 \end{figure}
 
-The {\em ATP-system:version}{\tt -RLR} container images are pushed to {\tt dockerhub} in~\ldots\\
-\hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
-which has a directory for each ATP system.
-The pushed container images are tagged as 
-{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -RLR-}{\em architecture},
-where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
-All the files for containerizing the ATP system are available from~\ldots \\
-\hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-kubernetes/tree/main/images}{\tt github.com/StarExecMiami/starexec-kubernetes/tree/main/images}\\
-A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
-
 %--------------------------------------------------------------------------------------------------
 \subsection{Running {\em ATP-system:version}{\tt -RLR} Containers}
 \label{Running}
 
-
 An {\em ATP-system:version}{\tt -RLR} container image is started using {\tt podman run}, specifying 
 the container image with the {\tt -t} option.
-The problem file is passed into the running container by copying the file to a local 
-{\tt problemfile} file outside the container, then using Podman volume mounting to map that file 
-to the {\tt /artifacts/CWD/problemfile} file inside the container.
 The parameters for running the ATP system are passed into the container as {\tt RLR\_*} 
-environment variables using the {\tt -e} option; in particular {\tt RLR\_INPUT\_FILE} must be 
-{\tt /artifacts/CWD/problemfile}.
+environment variables using the {\tt -e} option.
+The problem file is passed into the running container using the {\tt -v} option to mount 
+the directory containing the problem file to a directory inside the container, and setting the
+{\tt RLR\_INPUT\_FILE} environment variable to the name of the problem file in the directory 
+inside the container.
 The command line parameters for {\tt runsolver} (the {\tt ENTRYPOINT} in the 
 {\em ATP-system:version}{\tt -RLR} container image) and {\tt run\_system} are provided as the
 remaining parameters to {\tt podman run}.
+For example, to run the {\tt eprover:3.0.03-RLR} container image on the problem {\tt MGT019+2.p},
+the {\tt podman run} could be~\ldots \\
+\hspace*{1cm}{\tt podman run -t eprover:3.0.03-RLR -v .:/artifacts/CWD \\
+-e RLR\_INPUT\_FILE='/artifacts/CWD/MGT019+2.p' -e RLR\_CPU\_LIMIT='60' \\
+-e RLR\_WC\_LIMIT='60' -e RLR\_MEM\_LIMIT='0' -e RLR\_INTENT='SAT' \\
+--timestamp -C 60 -W 60 run\_system} \\
+The {\tt --timestamp -C 60 -W 60} are command line parameters to {\tt runsolver}.
 
 A Python script {\tt run\_image.py} is provided to simplify and standardize running 
 {\em ATP-system:version}{\tt -RLR} container images.
 The script is shown in Appendix~\ref{run_image}.
-Minimally the script must have an {\em ATP-system:version}{\tt -RLR} container image name as a 
+The script must have an {\em ATP-system:version}{\tt -RLR} container image name as a 
 command line argument.
 By default {\tt run\_image.py} runs the {\em ATP-system:version}{\tt -RLR} with the problem 
 taken from {\tt stdin}, imposing no CPU, wall clock, or memory limits, with the {\tt THM} intent.
-All the parameters can be changed via command line options.
+All the parameters can be changed with further command line options.
 
 %--------------------------------------------------------------------------------------------------
 \subsection{The {\tt ResourceLimitedRun} Utility}
 \label{RLR}
 
-When SystemOnTPTP was first made available~\cite{Sut07-CSR} it used a Perl program called
-{\tt TreeLimitedRun} to monitor and limit ATP systems' use of CPU time, wall clock time, and 
-memory.
+When the TPTP World's SystemOnTPTP service~\cite{Sut00-CADE-17} was first made 
+available~\cite{Sut07-CSR} it used a Perl program called {\tt TreeLimitedRun} to monitor and 
+limit ATP systems' use of CPU time, wall clock time, and memory.
 As the name suggests, the principle was to monitor the forest of process hierarchies started by
 an ATP system, understanding that some of the processes might be orphaned and adopted by the
 {\tt init} process (now {\tt systemd} and others).
 {\tt TreeLimitedRun} was superseded by {\tt runsolver}~\cite{Rou11} that is written in C++, and
 adopted the same principle for monitoring processes.
-{\tt BenchExec}~\cite{BLW19}, which is used in StarExec Iowa, takes advantage of Linux's
-cgroup~v2 subsystem, which provides operating system level support for monitoring processes.
+More recently, {\tt BenchExec}~\cite{BLW19}, which is used in StarExec Iowa, has taken advantage 
+of Linux's cgroup~v2 subsystem, which provides operating system level support for monitoring 
+processes.
 {\tt BenchExec} is written in Python, with rather heavy installation requirements.
 The new {\tt ResourceLimitedRun} utility also uses Linux's cgroup~v2 subsystem, but is written
 in C so that a simple binary can be built.
