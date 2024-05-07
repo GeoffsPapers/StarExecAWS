@@ -121,7 +121,7 @@ the TPTP problem library \cite{Sut17},
 the TSTP solution library \cite{Sut10},
 standards for writing ATP problems and reporting ATP solutions \cite{SS+06,Sut08-KEAPPA},
 tools and services for processing ATP problems and solutions \cite{Sut10},
-and it supports the the annual CADE ATP System Competition (CASC)~\cite{Sut16}.
+and it supports the annual CADE ATP System Competition (CASC)~\cite{Sut16}.
 Since its first release in 1993 the ATP community has used the TPTP World as an appropriate and 
 convenient infrastructure for ATP system development, evaluation, and application.
 The TPTP World has a diverse, engaged, and sustained user community, with various parts of the 
@@ -271,7 +271,7 @@ This encapsulation facilitates seamless software deployment across diverse compu
 Containerization offers numerous benefits, including scalability, resource efficiency, enhanced 
 security, and improved observability. 
 Since containers share the host operating system's kernel, they incur less overhead compared to 
-traditional virtualization techniques. 
+traditional virtualisation techniques. 
 This characteristic enables containers to be started and stopped quickly, facilitating rapid 
 scaling of applications to meet fluctuating demands. 
 Containerization also supports observability akin to bare-metal environments through kernel-level 
@@ -307,16 +307,8 @@ to adopt Kubernetes without the overhead of its full-scale versions, thus democr
 to this pivotal technology.
 
 %--------------------------------------------------------------------------------------------------
-% Jack
 \section{Containerizing StarExec}
 \label{ContainerizingStarExec}
-
-%A containerized StarExec can be used locally in Docker/Podman/Kubernetes. 
-%This allows StarExec users to build and test StarExec installation packages on their own computers before deploying to the StarExec Miami installation.
-
-% \dav{On justifying this effort: Containerizing StarExec components feels natural as a first step towards making it 'cloud-native'... and so on}
-% \dav{The stuff below was moved from Section \ref{StarExecK}. I think it belongs here. In this section we can comment on what we have done so far (putting current StarExec as a whole in a single container). However, a professional solution will have to split components in different (communicating) containers (two obvious candidates being the database and the batch scheduler SGE). In k8s, the StarExec components/containers would run together as a single pod. In Podman we can also group containers in a similar way (analogous to docker compose).}
-% \dav{We shall also note that Podman and kubernetes can/will both serve as backends for StarExec (the podman team keeps adding basic orchestration functionalities, so it can work as a lightweight alternative to k8s in simple scenarios). Btw podman is designed to play well with k8s (e.g. it understands k8s yaml config) so there is no big overhead in supporting both I think (this might facilitate adoption, specially since k8s still keeps some of its reputation as being very complex).}
 
 StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
 in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
@@ -371,15 +363,17 @@ systems after reading this section~\smiley.
 The ATP systems' are containerized in a hierarchy, shown in Figure~\ref{ImageDAG}.
 The underlying operating system is {\tt ubuntu:latest} from {\tt dockerhub}~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/_/ubuntu}{\tt hub.docker.com/\_/ubuntu} \\
-The {\tt ubuntu-build} container image adds to {\tt ubuntu:latest} using {\tt apt-get} to 
+The {\tt ubuntu-arc}\footnote{%
+``arc'' for ``Automated Reasoning Containerisation, or Automated Reasoning in the Cloud''.}
+container image adds to {\tt ubuntu:latest} using {\tt apt-get} to 
 install common software such as {\tt cmake}, {\tt git}, {\tt tcsh}, {\tt python3}, and {\tt wget}.
-{\tt ubuntu-build} also creates an {\tt artifacts} directory where the components required for 
+{\tt ubuntu-arc} also creates an {\tt artifacts} directory where the components required for 
 an ATP system execution are placed.
 
-The {\tt tptp-world-build} container image provides utilities from the TPTP World that are used by 
+The {\tt tptp-world} container image provides utilities from the TPTP World that are used by 
 ATP systems, e.g., {\tt SPCForProblem} detects the Specialist Problem Class (SPC) \cite{SS01} of 
 a problem that is used by some ATP systems to decide on what search parameters to use.
-To support these utilities some libraries that are not part of the {\tt ubuntu-build} have
+To support these utilities some libraries that are not part of the {\tt ubuntu-arc} have
 to be added.
 Additionally, the {\tt runsolver} utility for limiting and reporting the resources used by an 
 ATP system is added.
@@ -400,8 +394,8 @@ container images are provided in Section~\ref{BuildingATPSystemImages}.
 \subsection{Building ATP System Containers}
 \label{BuildingATPSystemImages}
 
-Each {\em ATP-system:version} container image is built on top of the {\tt ubuntu-build} container 
-image, and with the {\tt tptp-world-build} container image forms the base for the final 
+Each {\em ATP-system:version} container image is built on top of the {\tt ubuntu-arc} container 
+image, and with the {\tt tptp-world} container image forms the base for the final 
 {\em ATP-system:version}{\tt -RLR} container image.
 The {\em ATP-system} is the container name, and the {\em version}/{\em version}{\tt -RLR} are 
 the container tags.
@@ -409,38 +403,43 @@ Podman requires the container name to be lowercase, so, e.g., E's container is n
 The ``{\tt RLR}'' refers to the ``Resource Limited Run'' program used to monitor and limit the 
 resources used by the ATP system, either {\tt runsolver} or {\tt ResourceLimitRun}.
 
-{\em ATP-system:version} adds the ATP system's executables to {\tt ubuntu-build}.
+Each {\em ATP-system:version} container image adds the ATP system's executables to 
+{\tt ubuntu-arc}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
 The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile},
-e.g., in Figure~\ref{E---build} E version 3.0.03 is chosen.
+e.g., in Figure~\ref{E---build} E 3.0.03 is chosen.
 This localization is necessary because the incantations for retrieving and building particular 
-ATP systems version vary from system to system and from version to version.
-
-A {\tt run\_system} script must be provided in the {\em ATP-system:version} container image, 
-which is used to run the ATP system using what ever incantations are necessary.
-The parameters for running the ATP system are provided in environment variables:
-{\tt RLR\_INPUT\_FILE} that provides the problem file name,
-{\tt RLR\_CPU\_LIMIT} that gives the CPU time limit in seconds (0 by default to indicate no limit),
-{\tt LR\_WC\_LIMIT} that gives the wall clock time limit in seconds (0 by default to indicate no 
-limit),
-{\tt RLR\_MEM\_LIMIT} that gives the memory limit in MiB (0 by default to indicate no limit),
-and
-{\tt RLR\_INTENT} to indicate the user's intent, currently {\tt THM} to indicate that the ATP
-system should try prove the conjecture (or equivalently for most systems, show that the problem 
-is unsatisfiable - this is the default) or {\tt SAT} to indicate that the ATP system should try 
-disprove the conjecture (or equivalently for most systems, show that the problem is satisfiable).
-
+ATP system versions vary from system to system and from version to version.
 Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
 container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
-Appendix~\ref{E_run_system} shows E's {\tt run\_system} script.
+
+An {\em ATP-system:version} container image must include a {\tt run\_system} script that is used 
+to run the ATP system using what ever incantations are necessary.
+The parameters for running the ATP system are provided to the {\tt run\_system} script in 
+environment variables:
+{\tt RLR\_INPUT\_FILE} that provides the problem file name,
+{\tt RLR\_CPU\_LIMIT} that gives the CPU time limit in seconds (0 by default, to indicate no limit),
+{\tt LR\_WC\_LIMIT} that gives the wall clock time limit in seconds (0 by default, to indicate no 
+limit),
+{\tt RLR\_MEM\_LIMIT} that gives the memory limit in MiB (0 by default, to indicate no limit),
+and
+{\tt RLR\_INTENT} that indicates the user's intent ({\tt THM} by default, to indicate that the ATP
+system should try prove the conjecture (or, equivalently for most systems, show that the problem 
+is unsatisfiable))\footnote{%
+An {\em intent} is a tag such as {\tt THM} ot {\tt SAT}, indicating that the ATP system should
+try to prove or disprove the conjecture, respectively.}.
+Appendix~\ref{E_run_system} shows E's {\tt run\_system} script that invokes the {\tt eprover} 
+or {\tt eprover-ho} binary depending on whether the problem is first-order or higher-order, 
+and depending on the intent the appropriate command line arguments are given to the selected 
+binary along with the problem file and time limit. 
 
 \begin{figure}[htb]
 {\small
 \begin{verbatim}
 #------------------------------------------------------------
-FROM ubuntu-build
+FROM ubuntu-arc
 
 # Clones repository
 ARG E_VERSION=E-3.0.03
@@ -461,7 +460,6 @@ RUN cp PROVER/eprover-ho /artifacts/eprover-ho
 
 # run_system script
 ADD run_system /artifacts/
-
 #------------------------------------------------------------
 \end{verbatim}
 }
@@ -470,15 +468,15 @@ ADD run_system /artifacts/
 \end{figure}
 
 Each {\em ATP-system:version}{\tt -RLR} container image is based on its
-{\em ATP-system:version} container image and the {\tt tptp-world-build} container image.
-{\em ATP-system:version}{\tt -RLR} primarily extends {\tt tptp-world-build}, and
+{\em ATP-system:version} container image and the {\tt tptp-world} container image.
+{\em ATP-system:version}{\tt -RLR} primarily extends {\tt tptp-world}, and
 copies over only what is necessary from {\em ATP-system:version}.
-The entrypoint to {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility from
-{\tt tptp-world-build}.
 This simple arrangement allows a generic {\tt Dockerfile} to be used, parameterised by the
 underlying {\em ATP-system:version}.
+The {\tt ENTRYPOINT} in {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility from
+{\tt tptp-world}, which is used to run the ATP system (see Section~\ref{Running}).
 Figure~\ref{Dockerfile---RLR} shows the {\tt Dockerfile} to create E's {\tt eprover:3.0.03-RLR} 
-container image, using the command 
+container image, using the command  \\
 ``{\tt podman~build~-t~eprover:3.0.03-RLR~--build-arg PROVER\_IMAGE=eprover:3.0.03~.}''.
 
 \begin{figure}[htb]
@@ -488,7 +486,7 @@ container image, using the command
 ARG PROVER_IMAGE
 
 FROM ${PROVER_IMAGE} AS builder
-FROM tptp-world-build
+FROM tptp-world
 
 ENV PATH=".:${PATH}"
 WORKDIR /artifacts
@@ -504,48 +502,65 @@ ENTRYPOINT ["runsolver"]
 \label{Dockerfile---RLR}
 \end{figure}
 
-ZZZZZZZZz
-The {\em ATP-system:version}{\tt -RLR} container images are pushed to {\tt dockerhub} 
-in~\ldots\\
+The {\em ATP-system:version}{\tt -RLR} container images are pushed to {\tt dockerhub} in~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/repositories/tptpstarexec}{\tt hub.docker.com/repositories/tptpstarexec}\\
 which has a directory for each ATP system.
 The pushed container images are tagged as 
-{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -runsolver-}{\em architecture},
+{\em ATP-system-name}{\tt :}{\em ATP-system-version}{\tt -RLR-}{\em architecture},
 where {\em architecture} is, e.g., {\tt arm64} or {\tt amd64}.
 All the files for containerizing the ATP system are available from~\ldots \\
 \hspace*{1cm}\href{https://github.com/StarExecMiami/starexec-kubernetes/tree/main/images}{\tt github.com/StarExecMiami/starexec-kubernetes/tree/main/images}\\
 A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
 
 %--------------------------------------------------------------------------------------------------
-\subsection{Running ATP System Containers}
+\subsection{Running {\em ATP-system:version}{\tt -RLR} Containers}
 \label{Running}
 
-A Python script {\tt run\_image.py} is available to simplify and standardize running containerized 
-ATP systems from the command line.
-The script is shown in Appendix~\ref{runsystem}.
-Minimally the script must have the {\em ATP-system:version}{\tt -RLR} container image name as a 
-command line argument.
-By default {\tt run\_image.py} runs the {\em ATP-system:version}{\tt -RLR} in a
-Podman container, taking the problem from {\tt stdin}, imposing CPU and wall clock time 
-limits of 60s, imposing no memory limit, with the intention\footnote{%
-An intention is a tag such as {\tt THM} ot {\tt SAT}, indicating that the ATP system should
-try to prove or disprove the conjecture, respectively.} 
-that the ATP system should try prove that the problem's conjecture is a theorem.
-The problem file is passed into the running container using Podman volume mounting by copying the
-file to a local {\tt problemfile} file outside the container and mapping the file to the 
-{\tt /artifacts/CWD/problemfile} file inside the container.
-All the parameters of {\tt run\_image.py} can be changed via command line options.
 
-The entrypoint in {\em ATP-system:version}{\tt -RLR} is the {\tt runsolver} utility, 
-which in turn starts the {\tt run\_system} script with the problem, CPU limit, wall clock limit, 
-memory limit, and the proof request as arguments.
-Each {\tt run\_system} script is responsible for starting the ATP system -- this action varies 
-tremendously between ATP systems, and is thus usually provided by the system developer.
-For example, E has its own script {\tt run\_E} that invokes the {\tt eprover} or {\tt eprover-ho}
-binary depending on whether the problem is first-order or higher-order, and depending on the
-intention the appropriate command line arguments are given to the selected binary along
-with the problem file and time limit. 
-Thus E's {\tt run\_system} script starts the E-specific {\tt run\_E} script.
+An {\em ATP-system:version}{\tt -RLR} container image is started using {\tt podman run}, specifying 
+the container image with the {\tt -t} option.
+The problem file is passed into the running container by copying the file to a local 
+{\tt problemfile} file outside the container, then using Podman volume mounting to map that file 
+to the {\tt /artifacts/CWD/problemfile} file inside the container.
+The parameters for running the ATP system are passed into the container as {\tt RLR\_*} 
+environment variables using the {\tt -e} option; in particular {\tt RLR\_INPUT\_FILE} must be 
+{\tt /artifacts/CWD/problemfile}.
+The command line parameters for {\tt runsolver} (the {\tt ENTRYPOINT} in the 
+{\em ATP-system:version}{\tt -RLR} container image) and {\tt run\_system} are provided as the
+remaining parameters to {\tt podman run}.
+
+A Python script {\tt run\_image.py} is provided to simplify and standardize running 
+{\em ATP-system:version}{\tt -RLR} container images.
+The script is shown in Appendix~\ref{run_image}.
+Minimally the script must have an {\em ATP-system:version}{\tt -RLR} container image name as a 
+command line argument.
+By default {\tt run\_image.py} runs the {\em ATP-system:version}{\tt -RLR} with the problem 
+taken from {\tt stdin}, imposing no CPU, wall clock, or memory limits, with the {\tt THM} intent.
+All the parameters can be changed via command line options.
+
+%--------------------------------------------------------------------------------------------------
+\subsection{The {\tt ResourceLimitedRun} Utility}
+\label{RLR}
+
+When SystemOnTPTP was first made available~\cite{Sut07-CSR} it used a Perl program called
+{\tt TreeLimitedRun} to monitor and limit ATP systems' use of CPU time, wall clock time, and 
+memory.
+As the name suggests, the principle was to monitor the forest of process hierarchies started by
+an ATP system, understanding that some of the processes might be orphaned and adopted by the
+{\tt init} process (now {\tt systemd} and others).
+{\tt TreeLimitedRun} was superseded by {\tt runsolver}~\cite{Rou11} that is written in C++, and
+adopted the same principle for monitoring processes.
+{\tt BenchExec}~\cite{BLW19}, which is used in StarExec Iowa, takes advantage of Linux's
+cgroup~v2 subsystem, which provides operating system level support for monitoring processes.
+{\tt BenchExec} is written in Python, with rather heavy installation requirements.
+The new {\tt ResourceLimitedRun} utility also uses Linux's cgroup~v2 subsystem, but is written
+in C so that a simple binary can be built.
+{\tt ResourceLimitedRun} has the same command line parameters as {\tt runsolver}, and thus
+can, in principle, be substituted for {\tt runsolver}.
+This works fine outside containers, but there are some issues to resolve in order to make
+it work inside containers.
+This is ongoing work at the time of writing, and hopefully will be finished at the time of
+presentation!
 
 %--------------------------------------------------------------------------------------------------
 \section{Towards a Cloud-native StarExec}
