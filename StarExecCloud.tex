@@ -575,8 +575,8 @@ presentation!
 
 The term ``cloud-native'' has increasingly become synonymous with an approach to designing and 
 operating applications that fully leverage the benefits of the cloud computing model.\footnote{%
-For more information refer to the initiatives led by the Cloud Native Computing Foundation (CNCF 
-\href{https://www.cncf.io/}{\tt www.cncf.io}), which advocates for the adoption of this paradigm
+For more information refer to the initiatives led by the Cloud Native Computing Foundation (CNCF)
+at \href{https://www.cncf.io/}{\tt www.cncf.io}), which advocates for the adoption of this paradigm
 by fostering and sustaining an ecosystem of open source, vendor-neutral projects.}
 Cloud-native applications are distinguished by their ability to scale effectively, utilizing 
 the cloud's capability to dynamically allocate resources. 
@@ -595,38 +595,34 @@ are deployed and run on Kubernetes clusters, aligned with the IaC paradigm.
 
 The synthesis of these practices allows for the entire stack, from infrastructure to application, 
 to be declaratively specified, versioned, and automatically deployed as required. 
-ATP users and developers can thus deploy StarExec (including its requisite infrastructure) in 
-their preferred cloud environment or even in on-premises servers. 
 The reliance on mainstream open source technologies such as the CNCF Kubernetes and Podman
 projects (\href{https://www.cncf.io/projects/}{\tt www.cncf.io/projects}) offers unparalleled 
 flexibility, scalability, and portability, free from the constraints of single vendors or 
 platforms.
 An open distribution model ensures that StarExec's infrastructure ``as code'' is readily 
 accessible for modification and distribution, e.g., by cloning or forking from our GitHub 
-repository\footnote{%
-\href{https://github.com/StarExecMiami/starexec-kubernetes}{\tt github.com/StarExecMiami/starexec-kubernetes} 
-hosts current work in progress, to become more organized as work progresses.}
+repository.
+Adopting these technologies will allow ATP systems and StarExec, including the requisite 
+infrastructure, to be deployed by ATP system developers and users in 
+their preferred cloud environment or even in on-premises servers. 
 This approach significantly simplifies the process of utilizing state-of-the-art ATP technology, 
 making it much more easily usable by anyone, anywhere.
 
+%--------------------------------------------------------------------------------------------------
 \subsection{Re-engineering StarExec for the Cloud}
 \label{FutureStarExec}
 
-Recalling the current architecture of StarExec discussed in Section~\ref{ContainerizingStarExec}, 
+Recalling the current architecture of StarExec described in Section~\ref{ContainerizingStarExec}, 
 several areas for improvement have been identified to better serve the needs for re-engineering. 
 Our ongoing efforts include:
 
 \begin{enumerate}
 \item \textbf{Utilization of containerized ATP systems} (see 
       Section~\ref{ContainerizingATPSystems}), which will be hosted in a publicly accessible 
-      container image registry\footnote{%
-      Well-known public registries are {\tt dockerhub} 
-      (\href{https://hub.docker.com/}{\tt hub.docker.com}) and Quay 
-      (\href{https://quay.io/}{\tt quay.io}).},
-      instead of the current approach of requiring StarExec users to build and upload a 
-      StarExec {\tt .tgz} package according to StarExec specifications.
+      container image registry, instead of the current approach of requiring StarExec users to 
+      build and upload a StarExec {\tt .tgz} package according to StarExec specifications.
 \item \textbf{Adding an abstraction layer for database communication} with the relational 
-      database (MariaDB) currently used to persist job information.  
+      database (MariaDB) used to persist job information.  
       This layer will allow the database component to operate in its own container, significantly 
       reducing coupling. 
       Furthermore, by eliminating MariaDB-specific bindings, compatibility with other database 
@@ -663,7 +659,7 @@ Our ongoing efforts include:
 \end{enumerate}
 
 Figure~\ref{ArchitectureK} shows a generic architecture of the future re-engineered StarExec 
-system.
+using Kubernetes.
 
 \begin{figure}[htb]
 \begin{center}
@@ -676,11 +672,13 @@ system.
 \subsection{StarExec in AWS}
 
 An Amazon Research Award\footnote{%
-Amazon Research Award, Fall 2023. Any opinions, findings, and conclusions or recommendations 
-expressed in this material are those of the authors, and do not reflect the views of Amazon.} 
+\href{https://www.amazon.science/research-awards/recipients/geoffrey-sutcliffe}
+{Amazon Research Award, Fall 2023}.
+Any opinions, findings, and conclusions or recommendations expressed in this material are those 
+of the authors, and do not reflect the views of Amazon.} 
 has been granted to deploy StarExec in AWS.
 This will not only help fund the development efforts discussed in Section~\ref{FutureStarExec}, 
-but will also fund a first fully-functional reference deployment of StarExec on the AWS cloud. 
+but will also fund a first fully-functional reference deployment of StarExec in the AWS cloud. 
 The generic architecture in Figure~\ref{ArchitectureK} will be instantiated using concrete 
 AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 
@@ -699,15 +697,16 @@ AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 \item The database will be Amazon Relational Database (RDS).
 \item The file system will be Amazon Elastic File System (EFS).
 \item The ATP systems' containerization will be made compatible with (possibly be exactly) the 
-      Amazon Trusted Solver (ATS) format\footnote{%
+      Amazon Trusted Solver (ATS) format.\footnote{%
       As was recently used in the SMT and SAT competitions -- see \\
-      \href{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}{\tt github.com/aws-samples/aws-batch-comp-infrastructure-sample}}.
+      \href{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}
+      {\tt github.com/aws-samples/aws-batch-comp-infrastructure-sample}}
 % \dav{@Geoff: do you have any refs for this "ATS format"? (it has an acronym so I assumed it 
 % must be good documented on the web (apparently is not))}.
 % Geoff: I heard about it when I had a meeting with the AWS people (Giles, Mike Whalen, etc).
 \end{packed_itemize}
 
-Leveraging AWS-managed services introduces a degree of cloud vendor lock-in, a situation that
+Leveraging AWS-managed services introduces a degree of vendor lock-in, a situation that
 will expedite the delivery of StarExec's initial cloud-native version to the community. 
 This approach will particularly benefit teams planning to deploy StarExec on their own AWS 
 accounts or through AWS grants.
