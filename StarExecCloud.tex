@@ -74,7 +74,7 @@ logic solver communities currently using the larger StarExec Iowa.
 In the long term StarExec will necessarily have to migrate to new compute environments.
 This paper describes work being done to reengineer StarExec as a cloud-native application using
 container technology and infrastructure-as-code practices.
-The first step has been to containerize StarExec and ATP systems so that they can be run on a 
+The first step has been to containerise StarExec and ATP systems so that they can be run on a 
 broad range of computer platforms. 
 The next step in process is to write a new backend in StarExec so that Kubernetes can be used to 
 orchestrate distribution of StarExec job pairs over whatever compute nodes are available.
@@ -162,9 +162,9 @@ In the long term StarExec will necessarily have to migrate to new compute enviro
 several plans are (at the time of writing) being discussed.
 This paper describes work being done to reengineer StarExec as a cloud-native application using
 container technology and infrastructure-as-code practices.
-The first step has been to containerize\footnote{%
+The first step has been to containerise\footnote{%
 Strictly, ``images'' are built, and the images are deployed in containers. 
-But keeping with common use of the terminology, we say ``container images'' and ``containerize''.} 
+But keeping with common use of the terminology, we say ``container images'' and ``containerise''.} 
 StarExec and ATP systems so that they can be run on a broad range of computer platforms.
 The next step in process is to write a new backend in StarExec so that Kubernetes can be used to
 orchestrate distribution of StarExec job pairs over whatever compute nodes are available.
@@ -177,10 +177,10 @@ customized, StarExec on their own computers or in the cloud.
 
 \paragraph{This paper is organized as follows:}
 Section~\ref{Background} provides a short background to ATP systems, StarExec, and 
-containerization.
-Section~\ref{ContainerizingStarExec} describes how StarExec has been containerized, and
-Section~\ref{ContainerizingATPSystems} describes how ATP systems have been containerized.
-Section~\ref{StarExecK} explains how the containerized StarExec and ATP systems will be deployed 
+containerisation.
+Section~\ref{ContainerisingStarExec} describes how StarExec has been containerised, and
+Section~\ref{ContainerisingATPSystems} describes how ATP systems have been containerised.
+Section~\ref{StarExecK} explains how the containerised StarExec and ATP systems will be deployed 
 in a Kubernetes setting.
 Section~\ref{Conclusion} concludes and looks forward to future work.
 
@@ -255,28 +255,28 @@ There have been some proposals for standardising the ATP system build process, e
 \href{https://tptp.org/Proposals/SystemBuild.html}{\tt tptp.org/Proposals/SystemBuild.html}, 
 but the diversity of ATP system software makes conformity nigh impossible.
 An alternative is to push the task back on the system developers, and one approach to this is
-containerizing ATP systems, as discussed in Section~\ref{ContainerizingATPSystems}.
+containerising ATP systems, as discussed in Section~\ref{ContainerisingATPSystems}.
 
 %--------------------------------------------------------------------------------------------------
-\subsection{Containerization}
-\label{Containerization}
+\subsection{Containerisation}
+\label{Containerisation}
 
 Containers are a technology stemming from the concept of operating-system-level 
 virtualization.\footnote{%
 \href{https://en.wikipedia.org/wiki/OS-level_virtualization}{\tt en.wikipedia.org/wiki/OS-level\_virtualization}} 
-The term ``containerization'' refers to the process of encapsulating an application and its 
+The term ``containerisation'' refers to the process of encapsulating an application and its 
 dependencies within a container image: an isolated environment that incorporates application code, 
 runtime platform, libraries, and other essential components into a compact, self-contained unit 
 operating on user space, while safely sharing the (Linux) kernel with other container images. 
 This encapsulation facilitates seamless software deployment across diverse computing landscapes.
 
-Containerization offers numerous benefits, including scalability, resource efficiency, enhanced 
+Containerisation offers numerous benefits, including scalability, resource efficiency, enhanced 
 security, and improved observability. 
 Since containers share the host operating system's kernel, they incur less overhead compared to 
 traditional virtualisation techniques. 
 This characteristic enables containers to be started and stopped quickly, facilitating rapid 
 scaling of applications to meet fluctuating demands. 
-Containerization also supports observability akin to bare-metal environments through kernel-level 
+Containerisation also supports observability akin to bare-metal environments through kernel-level 
 mechanisms such as eBPF\footnote{%
 Extended Berkeley Packet Filter, see \href{https://en.wikipedia.org/wiki/EBPF}{en.wikipedia.org/wiki/EBPF}}
 and cgroups\footnote{%
@@ -285,10 +285,10 @@ which enable sophisticated monitoring and resource management.
 The isolation provided by containers helps prevent conflicts between applications and enhances 
 security by limiting the impact of potential vulnerabilities.
 
-Popular containerization platforms, e.g., Docker, Podman, LXD, and rkt, have significantly 
+Popular containerisation platforms, e.g., Docker, Podman, LXD, and rkt, have significantly 
 contributed to the widespread adoption of container technology within the modern IT landscape. 
 Notably, Kubernetes (often abbreviated as K8s) has emerged as the de-facto industry standard for 
-container orchestration: automating the deployment, scaling, and management of containerized 
+container orchestration: automating the deployment, scaling, and management of containerised 
 applications. 
 Kubernetes' YAML-based configuration manifests (JSON-variants are also supported) have become 
 widely adopted as a language for  declarative infrastructure-as-code (IaC), enabling developers 
@@ -309,8 +309,8 @@ to adopt Kubernetes without the overhead of its full-scale versions, thus democr
 to this pivotal technology.
 
 %--------------------------------------------------------------------------------------------------
-\section{Containerizing StarExec}
-\label{ContainerizingStarExec}
+\section{Containerising StarExec}
+\label{ContainerisingStarExec}
 
 StarExec (see Section~\ref{StarExec}) is based around a head node that coordinates activities, 
 in particular the creation of jobs as sets of job pairs, with each pair consisting of an ATP 
@@ -321,8 +321,8 @@ StarExec currently offers two backends for running job pairs: the local backend 
 the same computer as the head node, and the Sun Grid Engine (SGE) backend that sends pairs out to 
 compute nodes.
 
-So far, the head node with a local backend has been successfully containerized - see the
-{\tt starexec-containerized} directory of the GitHub repository.
+So far, the head node with a local backend has been successfully containerised - see the
+{\tt starexec-containerised} directory of the GitHub repository.
 It includes~\ldots
 \begin{packed_itemize}
 \item A {\tt Dockerfile} for building a StarExec image with a local backend.
@@ -342,25 +342,25 @@ It includes~\ldots
 
 The deployment of StarExec Miami was a real challenge, requiring installation and configuration 
 of many pieces of software.
-The containerization approach aims to make this process simple and repeatable, eliminating the 
+The containerisation approach aims to make this process simple and repeatable, eliminating the 
 need to understand the complex environment requirements of StarExec. 
-While the containerization of StarExec with a local backend is somewhat valuable on its own,
+While the containerisation of StarExec with a local backend is somewhat valuable on its own,
 it is most importantly a first step towards the deployment of a full StarExec cluster in the cloud.
 Section~\ref{StarExecK} explains how this will be done.
 
 % \dav{A related idea is that, following the IaC approach, the resulting sources (shell scripts, config files, Dockerfiles, etc) can be made available (e.g. as a public Git repository) to a community of users/developers, so they can build, test (and run) their own (e.g. forked) StarExec(s). This also enables people to become contributors of other StarExec repos (e.g. Miami's) by sending pull requests or the like. I think this is a good means to promote the survival of StarExec as a decentralized open-source project.}
 
 %--------------------------------------------------------------------------------------------------
-\section{Containerizing ATP Systems}
-\label{ContainerizingATPSystems}
+\section{Containerising ATP Systems}
+\label{ContainerisingATPSystems}
 
-While the grand plan is to deploy ATP systems in a containerized StarExec, and in a Kubernetes 
-hosted version of StarExec, containerizing ATP systems is independently useful because it allows 
+While the grand plan is to deploy ATP systems in a containerised StarExec, and in a Kubernetes 
+hosted version of StarExec, containerising ATP systems is independently useful because it allows 
 ATP systems to be easily deployed in users' applications.
-It would be great if ATP systems developers become super enthusiastic about containerizing their 
+It would be great if ATP systems developers become super enthusiastic about containerising their 
 systems after reading this section~\smiley.
 
-The ATP systems' are containerized in a hierarchy, shown in Figure~\ref{ImageDAG}.
+The ATP systems' are containerised in a hierarchy, shown in Figure~\ref{ImageDAG}.
 The underlying operating system is {\tt ubuntu:latest} from {\tt dockerhub}~\ldots\\
 \hspace*{1cm}\href{https://hub.docker.com/_/ubuntu}{\tt hub.docker.com/\_/ubuntu} \\
 The {\tt ubuntu-arc}\footnote{%
@@ -402,41 +402,28 @@ the container tags.
 Podman requires the container name to be lowercase, so, e.g., E's container is named {\tt eprover}.
 The ``{\tt RLR}'' refers to the ``Resource Limited Run'' program used to monitor and limit the 
 resources used by the ATP system, either {\tt runsolver} or {\tt ResourceLimitRun}.
-The files for containerizing some ATP systems are in the {\tt provers-containerized} directory 
+The files for containerising some ATP systems are in the {\tt provers-containerised} directory 
 of the GitHub repository.
-A {\tt Makefile} to containerize E, Leo-III, and Vampire is included.
+A {\tt Makefile} to containerise E, Leo-III, and Vampire is included.
 
 Each {\em ATP-system:version} container image adds the ATP system's executables to 
 {\tt ubuntu-arc}.
 The ATP system is retrieved online, e.g., from a GitHub repository, and the necessary commands
 to build the executables are run.
 The executables are copied into the {\tt /artifacts} directory.
-The choice of which version of the ATP system to containerize is made inside the {\tt Dockerfile}.
-This localization is necessary because the incantations for retrieving and building particular 
+The choice of which version of the ATP system to containerise is made inside the {\tt Dockerfile}.
+This localization is necessary because the processes for retrieving and building particular 
 ATP system versions vary from system to system and from version to version.
-An {\em ATP-system:version} container image must include a {\tt run\_system} script that is used 
-to run the ATP system using what ever incantations are necessary.
+An {\em ATP-system:version} container image must include a {\tt run\_system} script to run the 
+ATP system, using whatever incantations are necessary.
 The parameters for running the ATP system are provided to the {\tt run\_system} script in 
-environment variables:
-{\tt RLR\_INPUT\_FILE} provides the problem file name,
-{\tt RLR\_CPU\_LIMIT} provides the CPU time limit in seconds (0 by default, to indicate no limit),
-{\tt LR\_WC\_LIMIT} provides the wall clock time limit in seconds (0 by default, to indicate no 
-limit),
-{\tt RLR\_MEM\_LIMIT} provides the memory limit in MiB (0 by default, to indicate no limit),
-and
-{\tt RLR\_INTENT} indicates the user's intent\footnote{%
-An {\em intent} is a tag such as {\tt THM} ot {\tt SAT}, indicating that the ATP system should
-try to prove (or, equivalently for most systems, show that the problem is unsatisfiable) or 
-disprove (or, equivalently for most systems, show that the problem is satisfiable) the conjecture, 
-respectively.}
-({\tt THM} by default).
+``{\tt RLR}'' environment variables (see Section~\ref{Running}).
 Appendix~\ref{E_run_system} shows E's {\tt run\_system} script that invokes the {\tt eprover} 
 or {\tt eprover-ho} binary depending on whether the problem is first-order or higher-order, 
 and depending on the intent the appropriate command line arguments are given to the selected 
 binary along with the problem file and time limit. 
 Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
 container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
-
 
 \begin{figure}[htb]
 {\small
@@ -518,8 +505,20 @@ ENTRYPOINT ["runsolver"]
 
 An {\em ATP-system:version}{\tt -RLR} container image is started using {\tt podman run}, specifying 
 the container image with the {\tt -t} option.
-The parameters for running the ATP system are passed into the container as {\tt RLR\_*} 
-environment variables using the {\tt -e} option.
+The parameters for running the ATP system are passed into the container in environment variables,
+using the {\tt -e} option:
+{\tt RLR\_INPUT\_FILE} provides the problem file name,
+{\tt RLR\_CPU\_LIMIT} provides the CPU time limit in seconds (0 by default, to indicate no limit),
+{\tt RLR\_WC\_LIMIT} provides the wall clock time limit in seconds (0 by default, to indicate no 
+limit),
+{\tt RLR\_MEM\_LIMIT} provides the memory limit in MiB (0 by default, to indicate no limit),
+and
+{\tt RLR\_INTENT} indicates the user's intent\footnote{%
+An {\em intent} is a tag such as {\tt THM} or {\tt SAT}, indicating that the ATP system should
+try to prove (or, equivalently for most systems, show that the problem is unsatisfiable) or 
+disprove (or, equivalently for most systems, show that the problem is satisfiable) the conjecture, 
+respectively.}
+({\tt THM} by default).
 The problem file is passed into the running container using the {\tt -v} option to mount 
 the directory containing the problem file to a directory inside the container, and setting the
 {\tt RLR\_INPUT\_FILE} environment variable to the name of the problem file in the directory 
@@ -533,7 +532,7 @@ the {\tt podman run} could be~\ldots \\
 -e RLR\_INPUT\_FILE='/artifacts/CWD/MGT019+2.p' -e RLR\_CPU\_LIMIT='60' \\
 -e RLR\_WC\_LIMIT='60' -e RLR\_MEM\_LIMIT='0' -e RLR\_INTENT='SAT' \\
 --timestamp -C 60 -W 60 run\_system} \\
-The {\tt --timestamp -C 60 -W 60} are command line parameters to {\tt runsolver}.
+The ``{\tt --timestamp -C 60 -W 60}'' are command line parameters to {\tt runsolver}.
 
 A Python script {\tt run\_image.py} is provided to simplify and standardize running 
 {\em ATP-system:version}{\tt -RLR} container images.
@@ -587,9 +586,9 @@ It inherently supports infrastructure-as-code (IaC), a key DevOps practice, enab
 and provisioning of infrastructure through declarative, version-controlled definition files that 
 are both human- and machine-readable.
 
-Containers (see Section~\ref{Containerization}) play a pivotal role in cloud-native development. 
+Containers (see Section~\ref{Containerisation}) play a pivotal role in cloud-native development. 
 {\tt Dockerfile}s are used to specify the steps to create a container image, embodying the IaC 
-philosophy by detailing the desired (partial) state of a containerized application. 
+philosophy by detailing the desired (partial) state of a containerised application. 
 Similarly, Kubernetes YAML manifests define, in a declarative fashion, how application components 
 are deployed and run on Kubernetes clusters, aligned with the IaC paradigm.
 
@@ -612,13 +611,13 @@ making it much more easily usable by anyone, anywhere.
 \subsection{Re-engineering StarExec for the Cloud}
 \label{FutureStarExec}
 
-Recalling the current architecture of StarExec described in Section~\ref{ContainerizingStarExec}, 
+Recalling the current architecture of StarExec described in Section~\ref{ContainerisingStarExec}, 
 several areas for improvement have been identified to better serve the needs for re-engineering. 
 Our ongoing efforts include:
 
 \begin{enumerate}
-\item \textbf{Utilization of containerized ATP systems} (see 
-      Section~\ref{ContainerizingATPSystems}), which will be hosted in a publicly accessible 
+\item \textbf{Utilization of containerised ATP systems} (see 
+      Section~\ref{ContainerisingATPSystems}), which will be hosted in a publicly accessible 
       container image registry, instead of the current approach of requiring StarExec users to 
       build and upload a StarExec {\tt .tgz} package according to StarExec specifications.
 \item \textbf{Adding an abstraction layer for database communication} with the relational 
@@ -633,7 +632,7 @@ Our ongoing efforts include:
       current SGE cluster management.
       This change offers numerous benefits: 
       \begin{packed_itemize}
-	  \item \textbf{Scalability:} Kubernetes excels at managing and scaling containerized 
+	  \item \textbf{Scalability:} Kubernetes excels at managing and scaling containerised 
             applications, adapting to fluctuating workloads with ease. 
             It also seamlessly integrates with most infrastructure provisioning tools, supporting 
             both cloud and on-premise platforms.
@@ -696,7 +695,7 @@ AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
       which have four Intel Xeon Scalable vCPUs running up to 3.5GHz, and 128 GiB memory.
 \item The database will be Amazon Relational Database (RDS).
 \item The file system will be Amazon Elastic File System (EFS).
-\item The ATP systems' containerization will be made compatible with (possibly be exactly) the 
+\item The ATP systems' containerisation will be made compatible with (possibly be exactly) the 
       Amazon Trusted Solver (ATS) format.\footnote{%
       As was recently used in the SMT and SAT competitions -- see \\
       \href{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}
@@ -722,15 +721,13 @@ We are particularly enthusiastic about collaborating with teams interested in de
 on their on-premise infrastructure or within university HPC clusters.
 
 %--------------------------------------------------------------------------------------------------
-% Geoff
 \section{Conclusion}
 \label{Conclusion}
 
-This paper has described work being done to containerize StarExec and ATP systems so that they 
+This paper has described work being done to containerise StarExec and ATP systems so that they 
 can be run on a broad range of computer platforms.
-Additionally, this work explains plans to build a Kubernetes backend in StarExec so that 
-Kubernetes can be used to orchestrate distribute of StarExec job pairs over whatever compute 
-nodes are available.
+Additionally, this work explains plans to build backend in StarExec so that Kubernetes can be 
+used to orchestration distribute of StarExec job pairs over whatever compute nodes are available.
 
 This is ongoing work -- some of the work is still in progress, particularly embedding StarExec in 
 Kubernetes on AWS.
