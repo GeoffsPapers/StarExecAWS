@@ -265,7 +265,7 @@ Containers are a technology stemming from the concept of operating-system-level
 virtualization.\footnote{%
 See \href{https://en.wikipedia.org/wiki/OS-level_virtualization}{\tt en.wikipedia.org/wiki/OS-level\_virtualization}}
 In a nutshell, a container is a lightweight, isolated environment that packages and runs applications with all their dependencies as a self-contained unit in user space, while safely sharing the (Linux) kernel with other containers. This encapsulation facilitates seamless software deployment across diverse computing landscapes. 
-Containers are specified using read-only templates, called ``images'', which contain all necessary components and instructions for creating a container, including application code, runtime platform, libraries, environment variables, and configuration files. The task of generating a container image for an existing application so it can be run as a container is often referred to as ``containerisation''.
+Containers are instantiated from read-only templates (images) which contain all necessary components and instructions for creating a container, including application code, runtime platform, libraries, environment variables, and configuration files. The task of generating a container image definition\footnote{Each image definition is specified in a file named {\tt Dockerfile} (or {\tt Containerfile}) using a standard syntax.} for an existing application so it can be run as a container is often referred to as ``containerisation''.
 
 Containerising an application offers numerous benefits, including scalability, resource efficiency, enhanced 
 security, and improved observability. 
