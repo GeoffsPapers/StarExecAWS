@@ -263,14 +263,11 @@ containerising ATP systems, as discussed in Section~\ref{ContainerisingATPSystem
 
 Containers are a technology stemming from the concept of operating-system-level 
 virtualization.\footnote{%
-\href{https://en.wikipedia.org/wiki/OS-level_virtualization}{\tt en.wikipedia.org/wiki/OS-level\_virtualization}} 
-The term ``containerisation'' refers to the process of encapsulating an application and its 
-dependencies within a container image: an isolated environment that incorporates application code, 
-runtime platform, libraries, and other essential components into a compact, self-contained unit 
-operating on user space, while safely sharing the (Linux) kernel with other container images. 
-This encapsulation facilitates seamless software deployment across diverse computing landscapes.
+See \href{https://en.wikipedia.org/wiki/OS-level_virtualization}{\tt en.wikipedia.org/wiki/OS-level\_virtualization}}
+In a nutshell, a container is a lightweight, isolated environment that packages and runs applications with all their dependencies as a self-contained unit in user space, while safely sharing the (Linux) kernel with other containers. This encapsulation facilitates seamless software deployment across diverse computing landscapes. 
+Containers are specified using read-only templates, called ``images'', which contain all necessary components and instructions for creating a container, including application code, runtime platform, libraries, environment variables, and configuration files. The task of generating a container image for an existing application so it can be run as a container is often referred to as ``containerisation''.
 
-Containerisation offers numerous benefits, including scalability, resource efficiency, enhanced 
+Containerising an application offers numerous benefits, including scalability, resource efficiency, enhanced 
 security, and improved observability. 
 Since containers share the host operating system's kernel, they incur less overhead compared to 
 traditional virtualisation techniques. 
@@ -278,7 +275,7 @@ This characteristic enables containers to be started and stopped quickly, facili
 scaling of applications to meet fluctuating demands. 
 Containerisation also supports observability akin to bare-metal environments through kernel-level 
 mechanisms such as eBPF\footnote{%
-Extended Berkeley Packet Filter, see \href{https://en.wikipedia.org/wiki/EBPF}{en.wikipedia.org/wiki/EBPF}}
+Extended Berkeley Packet Filter, see \href{https://en.wikipedia.org/wiki/EBPF}{\tt en.wikipedia.org/wiki/EBPF}}
 and cgroups\footnote{%
 Linux's control groups, see \href{https://en.wikipedia.org/wiki/Cgroups}{\tt en.wikipedia.org/wiki/Cgroups}}, 
 which enable sophisticated monitoring and resource management. 
