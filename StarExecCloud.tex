@@ -396,7 +396,7 @@ image, and with the {\tt tptp-world} container image forms the base for the fina
 {\em ATP-system:version}{\tt -RLR} container image.
 The {\em ATP-system} is the container name, and the {\em version}/{\em version}{\tt -RLR} are 
 the container tags.
-Podman requires the container name to be lowercase, so, e.g., E's container is named {\tt eprover}.
+Podman\footnote{Our containerisation efforts are carried out using Podman, which is designed to work as a drop-in replacement for Docker (simply aliasing {\tt podman} to {\tt docker} is endorsed in the documentation).} requires the container name to be lowercase, so, e.g., E's container is named {\tt eprover}.
 The ``{\tt RLR}'' refers to the ``Resource Limited Run'' program used to monitor and limit the 
 resources used by the ATP system, either {\tt runsolver} or {\tt ResourceLimitRun}.
 The files for containerising some ATP systems are in the {\tt provers-containerised} directory 
@@ -500,8 +500,7 @@ ENTRYPOINT ["runsolver"]
 \subsection{Running {\em ATP-system:version}{\tt -RLR} Containers}
 \label{Running}
 
-An {\em ATP-system:version}{\tt -RLR} container image is started using {\tt podman run}, specifying 
-the container image with the {\tt -t} option.
+An {\em ATP-system:version}{\tt -RLR} container image is started using {\tt podman run}.
 The parameters for running the ATP system are passed into the container in environment variables,
 using the {\tt -e} option:
 {\tt RLR\_INPUT\_FILE} provides the problem file name,
@@ -572,9 +571,9 @@ presentation!
 The term ``cloud-native'' has increasingly become synonymous with an approach to designing and 
 operating applications that fully leverage the benefits of the cloud computing model.\footnote{%
 For more information refer to the initiatives led by the Cloud Native Computing Foundation (CNCF)
-at \href{https://www.cncf.io/}{\tt www.cncf.io}), which advocates for the adoption of this paradigm
+at \href{https://www.cncf.io/}{\tt www.cncf.io}, which advocates for the adoption of this paradigm
 by fostering and sustaining an ecosystem of open source, vendor-neutral projects.}
-Cloud-native applications are distinguished by their ability to scale effectively, utilizing 
+Cloud-native applications are distinguished by their ability to scale effectively, utilising 
 the cloud's capability to dynamically allocate resources. 
 This development paradigm is closely aligned with DevOps practices that emphasize collaboration 
 between development and operations teams to automate the process of software delivery and 
@@ -618,7 +617,7 @@ Our ongoing efforts include:
       container image registry, instead of the current approach of requiring StarExec users to 
       build and upload a StarExec {\tt .tgz} package according to StarExec specifications.
 \item \textbf{Adding an abstraction layer for database communication} with the relational 
-      database (MariaDB) used to persist job information.  
+      database (currently MariaDB) used to persist job information.  
       This layer will allow the database component to operate in its own container, significantly 
       reducing coupling. 
       Furthermore, by eliminating MariaDB-specific bindings, compatibility with other database 
@@ -644,7 +643,7 @@ Our ongoing efforts include:
 		   Certainly, Kubernetes does not outperform traditional High-Performance Computing (HPC) 
            software within their specialized application domains. 
            Kubernetes' extensible architecture facilitates interfacing with HPC systems through 
-           custom schedulers (see 
+           custom schedulers if the need arises (see 
            \href{https://kubernetes.io/docs/concepts/extend-kubernetes/}{\tt kubernetes.io/docs/concepts/extend-kubernetes}). 
            In this setup, Kubernetes oversees container orchestration, while delegating the 
            scheduling of intensive computing tasks to specialized HPC software.}
@@ -675,24 +674,23 @@ of the authors, and do not reflect the views of Amazon.}
 has been granted to deploy StarExec in AWS.
 This will not only help fund the development efforts discussed in Section~\ref{FutureStarExec}, 
 but will also fund a first fully-functional reference deployment of StarExec in the AWS cloud. 
-The generic architecture in Figure~\ref{ArchitectureK} will be instantiated using concrete 
+The generic architecture in Figure~\ref{ArchitectureK} can, e.g., be instantiated using concrete 
 AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 
 \begin{figure}[htb]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{ArchitectureAWS}
-\caption{Architecture in EKS on AWS}
+\caption{Architecture in AWS}
 \label{ArchitectureAWS}
 \end{center}
 \end{figure}
 \begin{packed_itemize}
 	
-\item The Kubernetes control plane will be managed by AWS Elastic Kubernetes Service (EKS).
-\item The StarExec head and compute nodes will run on Amazon EC2 {\tt x2iedn.xlarge} instances,
-      which have four Intel Xeon Scalable vCPUs running up to 3.5GHz, and 128 GiB memory.
-\item The database will be Amazon Relational Database (RDS).
-\item The file system will be Amazon Elastic File System (EFS).
-\item The ATP systems' containerisation will be made compatible with (possibly be exactly) the 
+\item The Kubernetes control plane can be managed by AWS Elastic Kubernetes Service (EKS).
+\item The StarExec head and compute nodes can run on suitable Amazon EC2 instances, e.g., {\tt x2iedn.xlarge} which have four Intel Xeon Scalable vCPUs running up to 3.5GHz, and 128 GiB memory.
+\item The database can be Amazon Relational Database (RDS).
+\item The file system can be Amazon Elastic File System (EFS).
+\item The ATP systems' containerisation can be made compatible with (possibly be exactly) the 
       Amazon Trusted Solver (ATS) format.\footnote{%
       As was recently used in the SMT and SAT competitions -- see \\
       \href{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}
@@ -702,7 +700,7 @@ AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 % Geoff: I heard about it when I had a meeting with the AWS people (Giles, Mike Whalen, etc).
 \end{packed_itemize}
 
-Leveraging AWS-managed services introduces a degree of vendor lock-in, a situation that
+Leveraging AWS-managed services %introduces a degree of vendor lock-in, a situation that
 will expedite the delivery of StarExec's initial cloud-native version to the community. 
 This approach will particularly benefit teams planning to deploy StarExec on their own AWS 
 accounts or through AWS grants.
