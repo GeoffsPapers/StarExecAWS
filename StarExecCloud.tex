@@ -261,11 +261,20 @@ containerising ATP systems, as discussed in Section~\ref{ContainerisingATPSystem
 \subsection{Containerisation}
 \label{Containerisation}
 
-Containers are a technology stemming from the concept of operating-system-level 
+{\em Containers} are a technology stemming from the concept of operating-system-level 
 virtualization.\footnote{%
 See \href{https://en.wikipedia.org/wiki/OS-level_virtualization}{\tt en.wikipedia.org/wiki/OS-level\_virtualization}}
-In a nutshell, a container is a lightweight, isolated environment that packages and runs applications with all their dependencies as a self-contained unit in user space, while safely sharing the (Linux) kernel with other containers. This encapsulation facilitates seamless software deployment across diverse computing landscapes. 
-Containers are instantiated from read-only templates (images) which contain all necessary components and instructions for creating a container, including application code, runtime platform, libraries, environment variables, and configuration files. The task of generating a container image definition\footnote{Each image definition is specified in a file named {\tt Dockerfile} (or {\tt Containerfile}) using a standard syntax.} for an existing application so it can be run as a container is often referred to as ``containerisation''.
+A container is a lightweight, isolated environment that packages and runs applications with all 
+their dependencies as a self-contained unit in user space, while safely sharing the (Linux) kernel 
+with other containers. 
+This encapsulation facilitates seamless software deployment across diverse computing landscapes. 
+Containers are instantiated from read-only {\em images} that contain all the necessary 
+components and instructions for creating a container, including application code, runtime 
+platform, libraries, environment variables, and configuration files. 
+An image is defined in a file named {\tt Dockerfile} (or {\tt Containerfile}) using a standard 
+syntax.
+The task of generating a container image definition for an existing application so it can be run 
+as a container is often referred to as ``containerisation''.
 
 Containerising an application offers numerous benefits, including scalability, resource efficiency, enhanced 
 security, and improved observability. 
@@ -415,9 +424,10 @@ An {\em ATP-system:version} container image must include a {\tt run\_system} scr
 ATP system, using whatever incantations are necessary.
 The parameters for running the ATP system are provided to the {\tt run\_system} script in 
 ``{\tt RLR}'' environment variables (see Section~\ref{Running}).
-Appendix~\ref{E_run_system} shows E's {\tt run\_system} script that invokes the {\tt eprover} 
-or {\tt eprover-ho} binary depending on whether the problem is first-order or higher-order, 
-and depending on the intent the appropriate command line arguments are given to the selected 
+Appendix~\ref{E_run_system} shows E's {\tt run\_system} script.
+It invokes the {\tt eprover} or {\tt eprover-ho} binary, depending on whether the problem is 
+first-order or higher-order.
+Depending on the intent, the appropriate command line arguments are given to the selected 
 binary along with the problem file and time limit. 
 Figure~\ref{E---build} shows the {\tt Dockerfile} used to create E's {\tt eprover:3.0.03} 
 container image, using the command ``{\tt podman~build~-t~eprover:3.0.03~.}''.
@@ -524,7 +534,7 @@ The command line parameters for {\tt runsolver} (the {\tt ENTRYPOINT} in the
 remaining parameters to {\tt podman run}.
 For example, to run the {\tt eprover:3.0.03-RLR} container image on the problem {\tt MGT019+2.p},
 the {\tt podman run} could be~\ldots \\
-\hspace*{1cm}{\tt podman run -t eprover:3.0.03-RLR -v .:/artifacts/CWD \\
+\hspace*{1cm}{\tt podman run eprover:3.0.03-RLR -v .:/artifacts/CWD \\
 -e RLR\_INPUT\_FILE='/artifacts/CWD/MGT019+2.p' -e RLR\_CPU\_LIMIT='60' \\
 -e RLR\_WC\_LIMIT='60' -e RLR\_MEM\_LIMIT='0' -e RLR\_INTENT='SAT' \\
 --timestamp -C 60 -W 60 run\_system} \\
@@ -555,14 +565,14 @@ More recently, {\tt BenchExec}~\cite{BLW19}, which is used in StarExec Iowa, has
 of Linux's cgroup~v2 subsystem, which provides operating system level support for monitoring 
 processes.
 {\tt BenchExec} is written in Python, with rather heavy installation requirements.
-The new {\tt ResourceLimitedRun} utility also uses Linux's cgroup~v2 subsystem, but is written
-in C so that a simple binary can be built.
+The new {\tt ResourceLimitedRun} utility is written in C, and also uses Linux's cgroup~v2 
+subsystem.
 {\tt ResourceLimitedRun} has the same command line parameters as {\tt runsolver}, and thus
-can, in principle, be substituted for {\tt runsolver}.
-This works fine outside containers, but there are some issues to resolve in order to make
-it work inside containers.
-This is ongoing work at the time of writing, and hopefully will be finished at the time of
-presentation!
+can be substituted for {\tt runsolver} (and {\tt BenchExec}).
+% This works fine outside containers, but there are some issues to resolve in order to make
+% it work inside containers.
+{\tt ResourceLimitedRun} is being tested at the time of writing, and hopefully will be 
+deployed at the time of presentation!
 
 %--------------------------------------------------------------------------------------------------
 \section{Towards a Cloud-native StarExec}
@@ -674,7 +684,7 @@ of the authors, and do not reflect the views of Amazon.}
 has been granted to deploy StarExec in AWS.
 This will not only help fund the development efforts discussed in Section~\ref{FutureStarExec}, 
 but will also fund a first fully-functional reference deployment of StarExec in the AWS cloud. 
-The generic architecture in Figure~\ref{ArchitectureK} can, e.g., be instantiated using concrete 
+The generic architecture in Figure~\ref{ArchitectureK} will be instantiated using concrete 
 AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 
 \begin{figure}[htb]
@@ -686,21 +696,22 @@ AWS-managed services, as shown in Figure~\ref{ArchitectureAWS}.
 \end{figure}
 \begin{packed_itemize}
 	
-\item The Kubernetes control plane can be managed by AWS Elastic Kubernetes Service (EKS).
-\item The StarExec head and compute nodes can run on suitable Amazon EC2 instances, e.g., {\tt x2iedn.xlarge} which have four Intel Xeon Scalable vCPUs running up to 3.5GHz, and 128 GiB memory.
-\item The database can be Amazon Relational Database (RDS).
-\item The file system can be Amazon Elastic File System (EFS).
+\item The Kubernetes control plane will be managed by AWS Elastic Kubernetes Service (EKS).
+\item The StarExec head and compute nodes will run on suitable Amazon EC2 instances, currently
+      planned to be {\tt x2iedn.xlarge} instances that have four Intel Xeon Scalable vCPUs 
+      running up to 3.5GHz, and 128 GiB memory.
+\item The database will be Amazon Relational Database (RDS).
+\item The file system will be Amazon Elastic File System (EFS).
 \item The ATP systems' containerisation can be made compatible with (possibly be exactly) the 
-      Amazon Trusted Solver (ATS) format.\footnote{%
-      As was recently used in the SMT and SAT competitions -- see \\
+      Amazon Trusted Solver format, as was recently used in the SMT and SAT competitions\footnote{%
       \href{https://github.com/aws-samples/aws-batch-comp-infrastructure-sample}
-      {\tt github.com/aws-samples/aws-batch-comp-infrastructure-sample}}
+      {\tt github.com/aws-samples/aws-batch-comp-infrastructure-sample}}.
 % \dav{@Geoff: do you have any refs for this "ATS format"? (it has an acronym so I assumed it 
 % must be good documented on the web (apparently is not))}.
 % Geoff: I heard about it when I had a meeting with the AWS people (Giles, Mike Whalen, etc).
 \end{packed_itemize}
 
-Leveraging AWS-managed services %introduces a degree of vendor lock-in, a situation that
+Leveraging AWS-managed services introduces a degree of vendor lock-in, a situation that
 will expedite the delivery of StarExec's initial cloud-native version to the community. 
 This approach will particularly benefit teams planning to deploy StarExec on their own AWS 
 accounts or through AWS grants.
